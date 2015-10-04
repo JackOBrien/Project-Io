@@ -16,6 +16,14 @@ public class UserEdit {
         this.offset = offset;
     }
 
+    public String getEditText() {
+        return this.editText;
+    }
+
+    public int getOffset() {
+        return this.offset;
+    }
+
     @Override
     public String toString() {
         return "UserEdit{" +

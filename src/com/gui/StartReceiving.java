@@ -22,6 +22,9 @@ public class StartReceiving implements Runnable {
 
         //Inserting text
         fakeEdits.add(new UserEdit(2, "This is a fake edit", 0));
+
+        //Moving cursor
+        fakeEdits.add(new UserEdit(2, null, 5));
     }
 
     private static void applyUserEditToDocument(Editor editor, UserEdit userEdit) {
@@ -34,7 +37,12 @@ public class StartReceiving implements Runnable {
 
         //Apply userEdit
         WriteCommandAction.runWriteCommandAction(project, () -> {
-            document.insertString(userEdit.getOffset(), userEdit.getEditText());
+            if (userEdit.getEditText() == null) {
+                editor.getCaretModel().moveToOffset(userEdit.getOffset());
+            }
+            else {
+                document.insertString(userEdit.getOffset(), userEdit.getEditText());
+            }
         });
 
     }

@@ -31,7 +31,7 @@ public class StartListening extends AnAction {
         Document document = editor.getDocument();
         document.addDocumentListener(documentListener);
 
-        eventMulticaster.addCaretListener(caretListener);
+//        eventMulticaster.addCaretListener(caretListener);
     }
 
     private DocumentListener documentListener = new DocumentListener() {
@@ -78,5 +78,10 @@ public class StartListening extends AnAction {
      */
     public DocumentListener getDocumentListener() {
         return documentListener;
+    }
+
+    //TODO: Remove this. Testing only.
+    public void setDocumentListener(DocumentListener dl) {
+        documentListener = dl;
     }
 }

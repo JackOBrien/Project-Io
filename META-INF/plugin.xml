@@ -39,7 +39,7 @@
     <actions>
         <!-- Add your actions here -->
 
-        <action id="io.startListening" class="com.gui.StartListening" text="Start Project Io">
+        <action id="io.startProject" class="com.io.gui.StartIo" text="Start Project Io">
             <add-to-group group-id="ToolsMenu" anchor="first"/>
         </action>
     </actions>

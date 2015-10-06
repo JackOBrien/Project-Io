@@ -1,4 +1,4 @@
-package com.gui;
+package com.io.gui;
 
 /**
  * Created by Jack on 9/28/2015.

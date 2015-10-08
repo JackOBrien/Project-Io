@@ -61,7 +61,9 @@ public class StartIo extends AnAction {
 
             if (!event.getNewFragment().toString().contains(dummyIdentifier)) {
                 if (!event.isWholeTextReplaced()) {
-                    UserEdit edit = new UserEdit(0, event.getNewFragment().toString(), event.getOffset());
+                    int lengthDifference = event.getNewLength() - event.getOldLength();
+
+                    UserEdit edit = new UserEdit(0, event.getNewFragment().toString(), event.getOffset(), lengthDifference);
 
                     for (Editor e : editors) {
                         if (e.getDocument().equals(event.getDocument())) continue;

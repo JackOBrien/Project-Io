@@ -41,7 +41,9 @@ public class StartListening extends AnAction {
 
             if (!event.getNewFragment().toString().contains(dummyIdentifier)) {
                 if (!event.isWholeTextReplaced()) {
-                    UserEdit edit = new UserEdit(0, event.getNewFragment().toString(), event.getOffset());
+                    int lengthDifference = event.getNewLength() - event.getOldLength();
+
+                    UserEdit edit = new UserEdit(0, event.getNewFragment().toString(), event.getOffset(), lengthDifference);
 
                     //TODO: Send UserEdits to server. Println serves as a placeholder.
                     System.out.println(edit);

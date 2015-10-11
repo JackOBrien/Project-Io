@@ -39,8 +39,12 @@
     <actions>
         <!-- Add your actions here -->
 
-        <action id="io.startProject" class="com.io.gui.StartIo" text="Start Project Io">
+        <action id="io.startProject" class="com.io.gui.StartIo" text="Start Project Io As Server">
             <add-to-group group-id="ToolsMenu" anchor="first"/>
+        </action>
+
+        <action id="io.startProjectClient" class="com.io.gui.StartIoClient" text="Start Project Io As Client">
+            <add-to-group group-id="ToolsMenu" anchor="first" />
         </action>
     </actions>
 

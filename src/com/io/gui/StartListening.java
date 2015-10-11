@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
+import com.io.net.Client;
 
 /**
  * Class which sets up the document to track changes and send them to the server.
@@ -14,6 +15,8 @@ import com.intellij.openapi.editor.event.*;
 public class StartListening extends AnAction {
 
     private EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
+
+    public Client client = null;
 
     /**
      * Adds DocumentListener to the current editor
@@ -45,6 +48,9 @@ public class StartListening extends AnAction {
 
                     UserEdit edit = new UserEdit(0, event.getNewFragment().toString(), event.getOffset(), lengthDifference);
 
+                    if (client != null) {
+                        client.sendUserEdit(edit);
+                    }
                     //TODO: Send UserEdits to server. Println serves as a placeholder.
                     System.out.println(edit);
                 }

@@ -1,9 +1,8 @@
 package com.io.gui;
 
-/**
- * Created by Jack on 9/28/2015.
- */
-public class UserEdit {
+import java.io.Serializable;
+
+public class UserEdit implements Serializable {
     private int userId;
 
     private String editText;

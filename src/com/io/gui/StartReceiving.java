@@ -32,7 +32,12 @@ public class StartReceiving {
             }
             else {
                 // Removes DocumentListener temporarily so inserting the UserEdit doesn't get resent.
-                document.removeDocumentListener(documentListener);
+                try {
+                    document.removeDocumentListener(documentListener);
+                }
+                catch(Exception ex) {
+                    return;
+                }
 
                 int diff = userEdit.getLengthDifference();
                 int offset = userEdit.getOffset();

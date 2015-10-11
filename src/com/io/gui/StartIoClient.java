@@ -4,12 +4,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.io.net.Server;
-import com.io.net.ServerListener;
+import com.io.net.Client;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
-public class StartIo extends AnAction {
+public class StartIoClient extends AnAction {
 
     ArrayList<Editor> editors;
     StartReceiving receiving;
@@ -24,18 +24,12 @@ public class StartIo extends AnAction {
 
         receiving = new StartReceiving(listening.getDocumentListener());
 
-        Server server = new Server();
-
-        server.addListener(new ServerListener() {
-            @Override
-            public void applyUserEdit(UserEdit userEdit) {
-                Editor editor = e.getData(LangDataKeys.EDITOR);
-                receiving.applyUserEditToDocument(editor, userEdit);
-            }
-        });
-
-        (new Thread(server)).start();
-        System.out.println("Server started");
+        try {
+            listening.client = new Client();
+        }
+        catch(IOException ex) {
+            System.out.println("Failed to connect to server");
+        }
     }
 
 }

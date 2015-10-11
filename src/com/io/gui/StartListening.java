@@ -1,40 +1,26 @@
 package com.io.gui;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
-import com.io.net.Client;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class which sets up the document to track changes and send them to the server.
  */
-public class StartListening extends AnAction {
+public class StartListening {
 
-    private EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
+    private List<EditorEvent> events = new ArrayList<>();
 
-    public Client client = null;
-
-    /**
-     * Adds DocumentListener to the current editor
-     * @param e Used to pull the current editor.
-     */
-    public void actionPerformed(AnActionEvent e) {
-
-        Editor editor = e.getData(LangDataKeys.EDITOR);
-
-        if (editor == null) {
-            System.err.println("Could not get editor.");
-            return;
-        }
-
+    public StartListening(Editor editor) {
         Document document = editor.getDocument();
         document.addDocumentListener(documentListener);
+    }
 
-//        eventMulticaster.addCaretListener(caretListener);
+    public void addEventListener(EditorEvent editorEvent) {
+        events.add(editorEvent);
     }
 
     private DocumentListener documentListener = new DocumentListener() {
@@ -48,9 +34,10 @@ public class StartListening extends AnAction {
 
                     UserEdit edit = new UserEdit(0, event.getNewFragment().toString(), event.getOffset(), lengthDifference);
 
-                    if (client != null) {
-                        client.sendUserEdit(edit);
+                    for (EditorEvent editorEvent : events) {
+                        editorEvent.sendChange(edit);
                     }
+
                     //TODO: Send UserEdits to server. Println serves as a placeholder.
                     System.out.println(edit);
                 }

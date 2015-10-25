@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class StartListening {
 
-    private List<EditorEvent> events = new ArrayList<EditorEvent>();
+    private List<EditorEvent> events = new ArrayList<>();
 
     public StartListening(Editor editor) {
         Document document = editor.getDocument();
@@ -51,7 +51,7 @@ public class StartListening {
         public void caretPositionChanged(CaretEvent event) {
             int offset = event.getEditor().logicalPositionToOffset(event.getNewPosition());
 
-            UserEdit edit = new UserEdit(0, null, offset, 0);
+            UserEdit edit = new UserEdit(0, offset, 0);
 
             for (EditorEvent editorEvent : events) {
                 editorEvent.sendChange(edit);

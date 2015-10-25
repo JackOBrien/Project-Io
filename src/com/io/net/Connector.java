@@ -1,5 +1,7 @@
 package com.io.net;
 
+import com.io.domain.Packet;
+import com.io.domain.PacketType;
 import com.io.domain.UserEdit;
 
 import java.io.IOException;
@@ -37,10 +39,15 @@ public class Connector implements Runnable {
             try {
                 ObjectInputStream inputStream = new ObjectInputStream(socket.getInputStream());
 
-                UserEdit userEdit = (UserEdit)inputStream.readObject();
+                Packet packet = (Packet) inputStream.readObject();
 
-                for (ConnectorEvent connectorEvent : listeners) {
-                    connectorEvent.applyUserEdit(userEdit);
+                if (packet.getPacketType() == PacketType.DOCUMENT_EDIT.id()) {
+
+                    UserEdit userEdit = (UserEdit) packet;
+
+                    for (ConnectorEvent connectorEvent : listeners) {
+                        connectorEvent.applyUserEdit(userEdit);
+                    }
                 }
             }
             catch (IOException ex) {

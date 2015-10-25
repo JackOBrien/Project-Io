@@ -1,6 +1,8 @@
 package com.io.domain;
 
-public abstract class Packet {
+import java.io.Serializable;
+
+public abstract class Packet implements Serializable {
 
     private int packetType;
 

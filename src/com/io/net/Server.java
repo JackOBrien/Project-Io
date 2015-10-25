@@ -1,6 +1,6 @@
 package com.io.net;
 
-import com.io.gui.UserEdit;
+import com.io.domain.UserEdit;
 
 import java.io.IOException;
 import java.net.ServerSocket;

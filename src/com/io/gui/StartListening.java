@@ -3,6 +3,7 @@ package com.io.gui;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.*;
+import com.io.domain.UserEdit;
 
 import java.util.ArrayList;
 import java.util.List;

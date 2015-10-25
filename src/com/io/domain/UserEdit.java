@@ -1,4 +1,4 @@
-package com.io.gui;
+package com.io.domain;
 
 import java.io.Serializable;
 

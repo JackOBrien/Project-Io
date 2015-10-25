@@ -3,8 +3,8 @@ package com.io.domain;
 public class Login extends Packet {
     private String username;
 
-    public Login(int packetType, String username){
-        super(packetType);
+    public Login(String username){
+        super(PacketType.LOGIN.id());
         this.username = username;
     }
 

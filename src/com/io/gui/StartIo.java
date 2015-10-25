@@ -18,8 +18,8 @@ public class StartIo extends AnAction {
 
     public void actionPerformed(AnActionEvent e) {
 
-        editors = new ArrayList<>();
-        Editor editor = e.getData(LangDataKeys.EDITOR);
+        editors = new ArrayList<Editor>();
+        final Editor editor = e.getData(LangDataKeys.EDITOR);
         editors.add(editor);
 
 
@@ -27,7 +27,7 @@ public class StartIo extends AnAction {
         receiving = new StartReceiving(editor, listening.getDocumentListener());
 
 
-        Server server = new Server();
+        final Server server = new Server();
 
         server.addListener(new ConnectorEvent() {
             @Override

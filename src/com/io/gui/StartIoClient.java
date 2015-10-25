@@ -18,14 +18,14 @@ public class StartIoClient extends AnAction {
     public StartReceiving receiving;
 
     public void actionPerformed(AnActionEvent e) {
-        editors = new ArrayList<>();
-        Editor editor = e.getData(LangDataKeys.EDITOR);
+        editors = new ArrayList<Editor>();
+        final Editor editor = e.getData(LangDataKeys.EDITOR);
         editors.add(editor);
 
         listening = new StartListening(editor);
         receiving = new StartReceiving(editor, listening.getDocumentListener());
 
-        Connector connector;
+        final Connector connector;
 
         try {
             connector = new Connector();

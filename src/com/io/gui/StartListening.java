@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class StartListening {
 
-    private List<EditorEvent> events = new ArrayList<>();
+    private List<EditorEvent> events = new ArrayList<EditorEvent>();
 
     public StartListening(Editor editor) {
         Document document = editor.getDocument();
@@ -38,9 +38,6 @@ public class StartListening {
                     for (EditorEvent editorEvent : events) {
                         editorEvent.sendChange(edit);
                     }
-
-                    //TODO: Send UserEdits to server. Println serves as a placeholder.
-                    System.out.println(edit);
                 }
             }
         }
@@ -51,13 +48,14 @@ public class StartListening {
 
     private CaretListener caretListener = new CaretListener() {
         @Override
-        public void caretPositionChanged(CaretEvent e) {
-            int offset = e.getEditor().logicalPositionToOffset(e.getNewPosition());
+        public void caretPositionChanged(CaretEvent event) {
+            int offset = event.getEditor().logicalPositionToOffset(event.getNewPosition());
 
-            UserEdit edit = new UserEdit(0, null, offset);
+            UserEdit edit = new UserEdit(0, null, offset, 0);
 
-            //TODO: Send caret position to server. Println serves as a placeholder.
-            System.out.println(edit);
+            for (EditorEvent editorEvent : events) {
+                editorEvent.sendChange(edit);
+            }
         }
 
         @Override

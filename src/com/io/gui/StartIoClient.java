@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.io.domain.UserEdit;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
 
@@ -17,14 +18,14 @@ public class StartIoClient extends AnAction {
     public StartReceiving receiving;
 
     public void actionPerformed(AnActionEvent e) {
-        editors = new ArrayList<>();
-        Editor editor = e.getData(LangDataKeys.EDITOR);
+        editors = new ArrayList<Editor>();
+        final Editor editor = e.getData(LangDataKeys.EDITOR);
         editors.add(editor);
 
         listening = new StartListening(editor);
         receiving = new StartReceiving(editor, listening.getDocumentListener());
 
-        Connector connector;
+        final Connector connector;
 
         try {
             connector = new Connector();

@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.io.domain.UserEdit;
 import com.io.net.Server;
 import com.io.net.ConnectorEvent;
 
@@ -17,8 +18,8 @@ public class StartIo extends AnAction {
 
     public void actionPerformed(AnActionEvent e) {
 
-        editors = new ArrayList<>();
-        Editor editor = e.getData(LangDataKeys.EDITOR);
+        editors = new ArrayList<Editor>();
+        final Editor editor = e.getData(LangDataKeys.EDITOR);
         editors.add(editor);
 
 
@@ -26,7 +27,7 @@ public class StartIo extends AnAction {
         receiving = new StartReceiving(editor, listening.getDocumentListener());
 
 
-        Server server = new Server();
+        final Server server = new Server();
 
         server.addListener(new ConnectorEvent() {
             @Override

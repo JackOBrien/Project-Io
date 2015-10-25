@@ -1,8 +1,6 @@
-package com.io.gui;
+package com.io.domain;
 
-import java.io.Serializable;
-
-public class UserEdit implements Serializable {
+public class UserEdit extends Packet {
     private int userId;
 
     private String editText;
@@ -11,13 +9,22 @@ public class UserEdit implements Serializable {
 
     private int offset;
 
-    public UserEdit(int userId, String editText, int offset) {
-        this(userId, editText, offset, editText.length());
-    }
-
     public UserEdit(int userId, String editText, int offset, int lengthDifference) {
+
+        super(PacketType.DOCUMENT_EDIT.id());
+
         this.userId = userId;
         this.editText = editText;
+        this.offset = offset;
+        this.lengthDifference = lengthDifference;
+    }
+
+    public UserEdit(int userId, int offset, int lengthDifference) {
+
+        super(PacketType.CURSOR_MOVE.id());
+
+        this.userId = userId;
+        this.editText = null;
         this.offset = offset;
         this.lengthDifference = lengthDifference;
     }

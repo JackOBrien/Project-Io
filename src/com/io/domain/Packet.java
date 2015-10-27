@@ -8,13 +8,24 @@ public abstract class Packet implements Serializable {
 
     private int packetType;
 
+    private final int INITIAL_ID = -1;
+
     public Packet(int userId, int packetType) {
         this.userId = userId;
         this.packetType = packetType;
     }
 
+    public Packet(int packetType) {
+        this.userId = INITIAL_ID;
+        this.packetType = packetType;
+    }
+
     public int getUserId() {
         return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     public int getPacketType() {

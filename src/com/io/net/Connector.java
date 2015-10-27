@@ -1,5 +1,6 @@
 package com.io.net;
 
+import com.io.domain.Login;
 import com.io.domain.Packet;
 import com.io.domain.PacketType;
 import com.io.domain.UserEdit;
@@ -7,6 +8,7 @@ import com.io.domain.UserEdit;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,18 +62,26 @@ public class Connector implements Runnable {
         }
     }
 
-    public void sendUserEdit(UserEdit userEdit) {
+    public void sendObject(Serializable object) {
         try {
-
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
-            objectOutputStream.writeObject(userEdit);
-            System.out.println("Sent user edit");
+            objectOutputStream.writeObject(object);
+            System.out.println("Sent object: " + object.getClass());
 
         } catch (Exception e) {
-            System.err.println("Client Error: " + e.getMessage());
-            System.err.println("Localized: " + e.getLocalizedMessage());
-            System.err.println("Stack Trace: " + e.getStackTrace());
+            e.printStackTrace();
         }
     }
 
+    public void sendUserEdit(UserEdit userEdit) {
+        sendObject(userEdit);
+    }
+
+    public int login(String username) {
+        Login login = new Login(username);
+        sendObject(login);
+        //TODO: Get server
+
+        return -1;
+    }
 }

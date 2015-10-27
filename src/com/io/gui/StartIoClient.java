@@ -13,44 +13,11 @@ import java.util.ArrayList;
 
 public class StartIoClient extends AnAction {
 
-    ArrayList<Editor> editors;
-    public StartListening listening;
-    public StartReceiving receiving;
-
     public void actionPerformed(AnActionEvent e) {
-        editors = new ArrayList<Editor>();
-        final Editor editor = e.getData(LangDataKeys.EDITOR);
-        editors.add(editor);
 
-        listening = new StartListening(editor);
-        receiving = new StartReceiving(editor, listening.getDocumentListener());
+        Editor editor = e.getData(LangDataKeys.EDITOR);
+        Client client = new Client(editor);
 
-        final Connector connector;
-
-        try {
-            connector = new Connector();
-        }
-        catch(IOException ex) {
-            System.out.println("Failed to connect to server");
-            return;
-        }
-
-
-        listening.addEventListener(new EditorEvent() {
-            @Override
-            public void sendChange(UserEdit userEdit) {
-                connector.sendUserEdit(userEdit);
-            }
-        });
-
-        connector.addEventListener(new ConnectorEvent() {
-            @Override
-            public void applyUserEdit(UserEdit userEdit) {
-                receiving.applyUserEditToDocument(editor, userEdit);
-            }
-        });
-
-        (new Thread(connector)).start();
 
     }
 

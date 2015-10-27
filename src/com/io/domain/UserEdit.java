@@ -1,7 +1,6 @@
 package com.io.domain;
 
 public class UserEdit extends Packet {
-    private int userId;
 
     private String editText;
 
@@ -11,9 +10,8 @@ public class UserEdit extends Packet {
 
     public UserEdit(int userId, String editText, int offset, int lengthDifference) {
 
-        super(PacketType.DOCUMENT_EDIT.id());
+        super(userId, PacketType.DOCUMENT_EDIT.id());
 
-        this.userId = userId;
         this.editText = editText;
         this.offset = offset;
         this.lengthDifference = lengthDifference;
@@ -21,9 +19,8 @@ public class UserEdit extends Packet {
 
     public UserEdit(int userId, int offset, int lengthDifference) {
 
-        super(PacketType.CURSOR_MOVE.id());
+        super(userId, PacketType.CURSOR_MOVE.id());
 
-        this.userId = userId;
         this.editText = null;
         this.offset = offset;
         this.lengthDifference = lengthDifference;
@@ -44,7 +41,7 @@ public class UserEdit extends Packet {
     @Override
     public String toString() {
         return "UserEdit{" +
-                "userId=" + userId +
+                "userId=" + super.getUserId() +
                 ", editText='" + editText + '\'' +
                 ", offset=" + offset +
                 ", lengthDifference=" + lengthDifference +

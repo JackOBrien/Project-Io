@@ -19,14 +19,13 @@ public class Client {
 
     private int userId;
 
-    public Client (Editor editor) {
+    private Connector connector;
+
+    public Client (final Editor editor) {
 
         setupListeners(editor);
 
-        username = JOptionPane.showInputDialog("Please enter a username");
-        System.out.println(username);
-
-        final Connector connector;
+        login();
 
         try {
             connector = new Connector();
@@ -35,20 +34,14 @@ public class Client {
             return;
         }
 
-
-
-        listening.addEventListener(new EditorEvent() {
-            @Override
-            public void sendChange(UserEdit userEdit) {
-                connector.sendUserEdit(userEdit);
-            }
+        listening.addEventListener(userEdit -> {
+            userEdit.setUserId(userId);
+            connector.sendUserEdit(userEdit);
         });
 
-        connector.addEventListener(new ConnectorEvent() {
-            @Override
-            public void applyUserEdit(UserEdit userEdit) {
-                receiving.applyUserEditToDocument(editor, userEdit);
-            }
+        connector.addEventListener(userEdit -> {
+            userEdit.setUserId(userId);
+            receiving.applyUserEditToDocument(editor, userEdit);
         });
 
         (new Thread(connector)).start();
@@ -60,6 +53,16 @@ public class Client {
     }
 
     private void login() {
+        username = JOptionPane.showInputDialog("Please enter a username");
+        System.out.println(username);
 
+//        userId = connector.login(username);
+
+        //TODO: REMOVE THIS -- TESTING ONLY
+        if (username.toLowerCase().startsWith("a")) {
+            userId = 1;
+        } else {
+            userId = 2;
+        }
     }
 }

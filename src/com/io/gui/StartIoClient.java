@@ -14,11 +14,8 @@ import java.util.ArrayList;
 public class StartIoClient extends AnAction {
 
     public void actionPerformed(AnActionEvent e) {
-
         Editor editor = e.getData(LangDataKeys.EDITOR);
-        Client client = new Client(editor);
-
-
+        new Client(editor);
     }
 
 }

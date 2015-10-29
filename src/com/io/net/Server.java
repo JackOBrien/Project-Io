@@ -37,7 +37,7 @@ public class Server implements Runnable {
                 // Create the Client Socket
                 Socket clientSocket = serverSocket.accept();
 
-                Connector serverWorker = new Connector(clientSocket, listeners);
+                Connector serverWorker = new Connector(workers.size(), clientSocket, listeners);
                 workers.add(serverWorker);
                 executorService.execute(serverWorker);
             }

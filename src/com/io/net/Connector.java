@@ -22,12 +22,18 @@ public class Connector implements Runnable {
     private Socket socket;
     private List<ConnectorEvent> listeners;
 
+    private int userId;
+
+    /** Server Constructor */
     public Connector() throws IOException {
         socket = new Socket("127.0.0.1", Server.PORT);
         listeners = new ArrayList<>();
     }
 
-    public Connector(Socket socket, List<ConnectorEvent> listeners) {
+    /** Client Constructor */
+    public Connector(int userId, Socket socket, List<ConnectorEvent> listeners) {
+        this.userId = userId;
+
         this.socket = socket;
         this.listeners = listeners;
     }
@@ -62,8 +68,11 @@ public class Connector implements Runnable {
 
                     Login login = (Login) packet;
 
-                    for (ConnectorEvent connectorEvent : listeners) {
+                    // Sets the user ID in the login packet.
+                    login.setUserId(userId);
 
+                    for (ConnectorEvent connectorEvent : listeners) {
+                        connectorEvent.applyUserId(login);
                     }
                 }
             }

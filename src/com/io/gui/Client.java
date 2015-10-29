@@ -53,7 +53,7 @@ public class Client {
 
             @Override
             public void applyUserId(Login login) {
-
+                userId = login.getUserId();
             }
         });
 

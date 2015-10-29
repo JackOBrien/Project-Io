@@ -4,6 +4,7 @@ import com.io.domain.Login;
 import com.io.domain.Packet;
 import com.io.domain.PacketType;
 import com.io.domain.UserEdit;
+import com.io.gui.Client;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -12,6 +13,9 @@ import java.io.Serializable;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.io.domain.PacketType.DOCUMENT_EDIT;
+import static com.io.domain.PacketType.LOGIN;
 
 public class Connector implements Runnable {
 
@@ -43,12 +47,23 @@ public class Connector implements Runnable {
 
                 Packet packet = (Packet) inputStream.readObject();
 
-                if (packet.getPacketType() == PacketType.DOCUMENT_EDIT.id()) {
+                /* Looks for packets containing a change to the documents contents */
+                if (packet.getPacketType() == DOCUMENT_EDIT.id()) {
 
                     UserEdit userEdit = (UserEdit) packet;
 
                     for (ConnectorEvent connectorEvent : listeners) {
                         connectorEvent.applyUserEdit(userEdit);
+                    }
+                }
+
+                /* Looks for packets signifying a new Client is logging on */
+                else if (packet.getPacketType() == LOGIN.id()) {
+
+                    Login login = (Login) packet;
+
+                    for (ConnectorEvent connectorEvent : listeners) {
+
                     }
                 }
             }
@@ -77,11 +92,8 @@ public class Connector implements Runnable {
         sendObject(userEdit);
     }
 
-    public int login(String username) {
-        Login login = new Login(username);
+    public void login(String username) {
+        Login login = new Login(Client.INITIAL_USER_ID, username);
         sendObject(login);
-        //TODO: Get server
-
-        return -1;
     }
 }

@@ -2,6 +2,7 @@ package com.io.gui;
 
 
 import com.intellij.openapi.editor.Editor;
+import com.io.domain.Login;
 import com.io.domain.UserEdit;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
@@ -10,6 +11,8 @@ import javax.swing.*;
 import java.io.IOException;
 
 public class Client {
+
+    public static final int INITIAL_USER_ID = -1;
 
     public StartListening listening;  //TODO: Make private
 
@@ -34,14 +37,24 @@ public class Client {
             return;
         }
 
-        listening.addEventListener(userEdit -> {
-            userEdit.setUserId(userId);
-            connector.sendUserEdit(userEdit);
+        listening.addEventListener(new EditorEvent() {
+            @Override
+            public void sendChange(UserEdit userEdit) {
+                userEdit.setUserId(userId);
+                connector.sendUserEdit(userEdit);
+            }
         });
 
-        connector.addEventListener(userEdit -> {
-            userEdit.setUserId(userId);
-            receiving.applyUserEditToDocument(editor, userEdit);
+        connector.addEventListener(new ConnectorEvent() {
+            @Override
+            public void applyUserEdit(UserEdit userEdit) {
+                receiving.applyUserEditToDocument(editor, userEdit);
+            }
+
+            @Override
+            public void applyUserId(Login login) {
+
+            }
         });
 
         (new Thread(connector)).start();

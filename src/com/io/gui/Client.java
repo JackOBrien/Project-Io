@@ -69,15 +69,7 @@ public class Client {
 
     private void login() {
         username = JOptionPane.showInputDialog("Please enter a username");
-        System.out.println(username);
 
-//        userId = connector.login(username);
-
-        //TODO: REMOVE THIS -- TESTING ONLY
-        if (username.toLowerCase().startsWith("a")) {
-            userId = 1;
-        } else {
-            userId = 2;
-        }
+        connector.login(username);
     }
 }

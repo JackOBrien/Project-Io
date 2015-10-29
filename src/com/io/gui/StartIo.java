@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.io.domain.Login;
 import com.io.domain.UserEdit;
 import com.io.net.Server;
 import com.io.net.ConnectorEvent;
@@ -33,6 +34,11 @@ public class StartIo extends AnAction {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
                 receiving.applyUserEditToDocument(editor, userEdit);
+            }
+
+            @Override
+            public void applyUserId(Login login) {
+
             }
         });
 

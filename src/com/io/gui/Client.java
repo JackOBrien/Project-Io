@@ -30,8 +30,6 @@ public class Client {
 
         setupListeners(editor);
 
-        login();
-
         try {
             connector = new Connector();
         } catch(IOException ex) {
@@ -50,6 +48,7 @@ public class Client {
         connector.addEventListener(new ConnectorEvent() {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
+                userEdit.setUserId(userId);
                 receiving.applyUserEditToDocument(editor, userEdit);
             }
 
@@ -60,6 +59,8 @@ public class Client {
         });
 
         (new Thread(connector)).start();
+
+        login();
     }
 
     private void setupListeners(Editor editor) {

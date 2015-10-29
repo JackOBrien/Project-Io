@@ -23,8 +23,10 @@ public class StartIo extends AnAction {
         editors.add(editor);
 
 
+
+
         listening = new StartListening(editor);
-        receiving = new StartReceiving(editor, listening.getDocumentListener());
+        receiving = new StartReceiving(editor, listening);
 
 
         final Server server = new Server();

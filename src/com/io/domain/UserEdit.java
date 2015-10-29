@@ -1,30 +1,31 @@
 package com.io.domain;
 
 public class UserEdit extends Packet {
+
     private int userId;
-
     private String editText;
-
+    private String filePath;
     private int lengthDifference;
-
     private int offset;
 
-    public UserEdit(int userId, String editText, int offset, int lengthDifference) {
+    public UserEdit(int userId, String editText, String filePath, int offset, int lengthDifference) {
 
         super(PacketType.DOCUMENT_EDIT.id());
 
         this.userId = userId;
         this.editText = editText;
+        this.filePath = filePath;
         this.offset = offset;
         this.lengthDifference = lengthDifference;
     }
 
-    public UserEdit(int userId, int offset, int lengthDifference) {
+    public UserEdit(int userId, String filePath, int offset, int lengthDifference) {
 
         super(PacketType.CURSOR_MOVE.id());
 
         this.userId = userId;
         this.editText = null;
+        this.filePath = filePath;
         this.offset = offset;
         this.lengthDifference = lengthDifference;
     }
@@ -41,13 +42,18 @@ public class UserEdit extends Packet {
         return this.lengthDifference;
     }
 
+    public String getFilePath() {
+        return this.filePath;
+    }
+
     @Override
     public String toString() {
         return "UserEdit{" +
                 "userId=" + userId +
-                ", editText='" + editText + '\'' +
+                ", editText='" + editText + "'" +
+                ", filePath='" + filePath + "'" +
                 ", offset=" + offset +
                 ", lengthDifference=" + lengthDifference +
-                '}';
+                "}";
     }
 }

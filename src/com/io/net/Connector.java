@@ -24,6 +24,8 @@ public class Connector implements Runnable {
 
     private int userId;
 
+    private String username;
+
     /** Server Constructor */
     public Connector() throws IOException {
         socket = new Socket("127.0.0.1", Server.PORT);
@@ -33,6 +35,7 @@ public class Connector implements Runnable {
     /** Client Constructor */
     public Connector(int userId, Socket socket, List<ConnectorEvent> listeners) {
         this.userId = userId;
+        this.username = Client.INITIAL_USER_NAME;
 
         this.socket = socket;
         this.listeners = listeners;
@@ -70,6 +73,9 @@ public class Connector implements Runnable {
 
                     // Sets the user ID in the login packet.
                     login.setUserId(userId);
+
+                    // Logs this user's username
+                    username = login.getUsername();
 
                     for (ConnectorEvent connectorEvent : listeners) {
                         connectorEvent.applyUserId(login);

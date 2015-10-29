@@ -14,6 +14,8 @@ public class Client {
 
     public static final int INITIAL_USER_ID = -1;
 
+    public static final String INITIAL_USER_NAME = "user";
+
     public StartListening listening;  //TODO: Make private
 
     public StartReceiving receiving;

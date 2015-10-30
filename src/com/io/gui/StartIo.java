@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.io.domain.Login;
 import com.io.domain.UserEdit;
+import com.io.net.Connector;
 import com.io.net.Server;
 import com.io.net.ConnectorEvent;
 
@@ -37,8 +38,10 @@ public class StartIo extends AnAction {
             }
 
             @Override
-            public void applyUserId(Login login) {
-
+            public void applyUserId(Login login, Connector connector) {
+                login.setUserId(connector.getUserId());
+                System.out.println("Sending login with user id " + login.getUserId());
+                server.sendLogin(login);
             }
         });
 

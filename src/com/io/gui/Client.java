@@ -53,8 +53,9 @@ public class Client {
             }
 
             @Override
-            public void applyUserId(Login login) {
+            public void applyUserId(Login login, Connector connector) {
                 userId = login.getUserId();
+                System.out.println(editor.getProject().getName() + ": User id is now " + userId);
             }
         });
 
@@ -71,6 +72,7 @@ public class Client {
     private void login() {
         username = JOptionPane.showInputDialog("Please enter a username");
 
-        connector.login(username);
+        Login login = new Login(INITIAL_USER_ID, username);
+        connector.sendObject(login);
     }
 }

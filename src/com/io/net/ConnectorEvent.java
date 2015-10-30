@@ -6,5 +6,5 @@ import com.io.domain.UserEdit;
 public interface ConnectorEvent {
     void applyUserEdit(UserEdit userEdit);
 
-    void applyUserId(Login login);
+    void applyUserId(Login login, Connector connector);
 }

@@ -22,23 +22,28 @@ public class Connector implements Runnable {
     private Socket socket;
     private List<ConnectorEvent> listeners;
 
+    //Used only by the server, because the server has multiple connectors
+    //These probably should not even be in here
     private int userId;
-
     private String username;
 
-    /** Server Constructor */
+    /** Client Constructor */
     public Connector() throws IOException {
         socket = new Socket("127.0.0.1", Server.PORT);
         listeners = new ArrayList<>();
     }
 
-    /** Client Constructor */
+    /** Server Constructor */
     public Connector(int userId, Socket socket, List<ConnectorEvent> listeners) {
         this.userId = userId;
         this.username = Client.INITIAL_USER_NAME;
 
         this.socket = socket;
         this.listeners = listeners;
+    }
+
+    public int getUserId() {
+        return userId;
     }
 
     public void addEventListener(ConnectorEvent connectorEvent) {
@@ -71,14 +76,11 @@ public class Connector implements Runnable {
 
                     Login login = (Login) packet;
 
-                    // Sets the user ID in the login packet.
-                    login.setUserId(userId);
-
                     // Logs this user's username
                     username = login.getUsername();
 
                     for (ConnectorEvent connectorEvent : listeners) {
-                        connectorEvent.applyUserId(login);
+                        connectorEvent.applyUserId(login, this);
                     }
                 }
             }
@@ -107,8 +109,4 @@ public class Connector implements Runnable {
         sendObject(userEdit);
     }
 
-    public void login(String username) {
-        Login login = new Login(Client.INITIAL_USER_ID, username);
-        sendObject(login);
-    }
 }

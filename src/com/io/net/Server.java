@@ -1,5 +1,6 @@
 package com.io.net;
 
+import com.io.domain.Login;
 import com.io.domain.UserEdit;
 
 import java.io.IOException;
@@ -57,6 +58,17 @@ public class Server implements Runnable {
     public void broadcastEdit(UserEdit userEdit) {
         for (Connector worker : workers) {
             worker.sendUserEdit(userEdit);
+        }
+    }
+
+    public void sendLogin(Login login) {
+        int id = login.getUserId();
+
+        for (Connector worker : workers) {
+            if (worker.getUserId() == id) {
+                worker.sendObject(login);
+                break;
+            }
         }
     }
 

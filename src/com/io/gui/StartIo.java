@@ -35,6 +35,7 @@ public class StartIo extends AnAction {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
                 receiving.applyUserEditToDocument(editor, userEdit);
+                server.broadcastEdit(userEdit);
             }
 
             @Override

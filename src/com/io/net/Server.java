@@ -57,7 +57,9 @@ public class Server implements Runnable {
 
     public void broadcastEdit(UserEdit userEdit) {
         for (Connector worker : workers) {
-            worker.sendUserEdit(userEdit);
+            if (worker.getUserId() != userEdit.getUserId()) {
+                worker.sendUserEdit(userEdit);
+            }
         }
     }
 

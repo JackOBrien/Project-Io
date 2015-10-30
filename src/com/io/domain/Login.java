@@ -4,7 +4,7 @@ public class Login extends Packet {
     private String username;
 
     public Login(int userId, String username){
-        super(userId, PacketType.LOGIN.id());
+        super(userId, PacketType.LOGIN);
         this.username = username;
     }
 

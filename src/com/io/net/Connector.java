@@ -62,7 +62,7 @@ public class Connector implements Runnable {
                 Packet packet = (Packet) inputStream.readObject();
 
                 /* Looks for packets containing a change to the documents contents */
-                if (packet.getPacketType() == DOCUMENT_EDIT.id()) {
+                if (packet.getPacketType() == DOCUMENT_EDIT) {
 
                     UserEdit userEdit = (UserEdit) packet;
 
@@ -72,7 +72,7 @@ public class Connector implements Runnable {
                 }
 
                 /* Looks for packets signifying a new Client is logging on */
-                else if (packet.getPacketType() == LOGIN.id()) {
+                else if (packet.getPacketType() == LOGIN) {
 
                     Login login = (Login) packet;
 

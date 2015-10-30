@@ -6,9 +6,9 @@ public abstract class Packet implements Serializable {
 
     private int userId;
 
-    private int packetType;
+    private PacketType packetType;
 
-    public Packet(int userId, int packetType) {
+    public Packet(int userId, PacketType packetType) {
         this.userId = userId;
         this.packetType = packetType;
     }
@@ -21,7 +21,7 @@ public abstract class Packet implements Serializable {
         this.userId = userId;
     }
 
-    public int getPacketType() {
+    public PacketType getPacketType() {
         return packetType;
     }
 }

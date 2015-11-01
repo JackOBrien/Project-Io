@@ -1,17 +1,14 @@
 package com.io.net;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
+import com.io.domain.ConnectionUpdate;
 import com.io.domain.Login;
 import com.io.domain.UserEdit;
 import com.io.gui.EditorEvent;
 import com.io.gui.StartListening;
 import com.io.gui.StartReceiving;
 import com.io.gui.UserListWindow;
+import javafx.util.Pair;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -84,9 +81,19 @@ public class Server implements Runnable {
                 ServerConnection serverConnection = findServerConnection(connector);
                 login.setUserId(serverConnection.getUserId());
                 serverConnection.setUsername(login.getUsername());
+
                 userListWindow.addUser(login.getUsername());
+
+                sendCurrentUserList(serverConnection.getUserId());
+                broadcastNewUser(serverConnection.getUserId(), serverConnection.getUsername());
+
                 System.out.println("Sending login with user id " + login.getUserId());
                 sendLogin(login);
+            }
+
+            @Override
+            public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
+                //Should never get one
             }
         });
 
@@ -149,9 +156,42 @@ public class Server implements Runnable {
     }
 
     public void broadcastEdit(UserEdit userEdit) {
-        for (ServerConnection connection : connections) {
+        for (ServerConnection connection: connections) {
             if (connection.getUserId() != userEdit.getUserId()) {
                 connection.getConnector().sendUserEdit(userEdit);
+            }
+        }
+    }
+
+    public void sendCurrentUserList(int userId) {
+
+        ArrayList<Pair<Integer, String>> newUsers = new ArrayList<Pair<Integer, String>>();
+
+        newUsers.add(new Pair(userId, username));
+
+        for (ServerConnection connection: connections) {
+            if (connection.getUserId() != userId) {
+                newUsers.add(new Pair(connection.getUserId(), connection.getUsername()));
+            }
+        }
+
+        ConnectionUpdate connectionUpdate = new ConnectionUpdate(0, newUsers);
+
+        for (ServerConnection connection : connections) {
+            if (connection.getUserId() == userId) {
+                connection.getConnector().sendObject(connectionUpdate);
+                break;
+            }
+        }
+    }
+
+    public void broadcastNewUser(int userId, String username) {
+        ArrayList<Pair<Integer, String>> newUsers = new ArrayList<Pair<Integer, String>>();
+        newUsers.add(new Pair(userId, username));
+        ConnectionUpdate connectionUpdate = new ConnectionUpdate(0, newUsers);
+        for (ServerConnection connection: connections) {
+            if (connection.getUserId() != userId) {
+                connection.getConnector().sendConnectionUpdate(connectionUpdate);
             }
         }
     }

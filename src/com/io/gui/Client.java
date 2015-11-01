@@ -2,13 +2,16 @@ package com.io.gui;
 
 
 import com.intellij.openapi.editor.Editor;
+import com.io.domain.ConnectionUpdate;
 import com.io.domain.Login;
 import com.io.domain.UserEdit;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
+import javafx.util.Pair;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Client {
 
@@ -63,6 +66,17 @@ public class Client {
                 username = login.getUsername();
                 userListWindow.addUser(username);
                 System.out.println(editor.getProject().getName() + ": User id is now " + userId);
+            }
+
+            @Override
+            public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
+                ArrayList<Pair<Integer, String>> users = connectionUpdate.getUserList();
+
+                System.out.println("Client received " + users.size());
+
+                for (Pair<Integer, String> user : users) {
+                    userListWindow.addUser(user.getValue());
+                }
             }
         });
 

@@ -1,16 +1,19 @@
 package com.io.domain;
 
-import java.util.Hashtable;
+
+import javafx.util.Pair;
+
+import java.util.ArrayList;
 
 public class ConnectionUpdate extends Packet {
-    private Hashtable<Integer, String> userTable;
+    private ArrayList<Pair<Integer, String>> userTable;
 
-    public ConnectionUpdate(int userId, Hashtable<Integer, String> userTable){
+    public ConnectionUpdate(int userId, ArrayList<Pair<Integer, String>> userTable){
         super(userId, PacketType.CONNECTION_UPDATE);
         this.userTable = userTable;
     }
 
-    public Hashtable<Integer, String> getUserMap() {
+    public ArrayList<Pair<Integer, String>> getUserList() {
         return userTable;
     }
 }

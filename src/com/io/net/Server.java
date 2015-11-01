@@ -46,6 +46,8 @@ public class Server implements Runnable {
     private List<ServerConnection> connections = new ArrayList<>();
     private Hashtable<Connector, ServerConnection> connectionLookup = new Hashtable<>();
 
+    private UserListWindow userListWindow;
+
     public Server(final Editor editor) {
 
         listening = new StartListening(editor);
@@ -57,14 +59,7 @@ public class Server implements Runnable {
             username = INITIAL_USER_NAME;
         }
 
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(editor.getProject());
-        ToolWindow toolWindow = toolWindowManager.registerToolWindow("User List", true, ToolWindowAnchor.LEFT);
-
-        UserListWindow userListWindow = new UserListWindow();
-
-        Content content = ContentFactory.SERVICE.getInstance().createContent(userListWindow, "", true);
-        toolWindow.getContentManager().addContent(content);
-
+        userListWindow = new UserListWindow(editor.getProject());
         userListWindow.addUser(username);
 
         this.addListener(new ConnectorEvent() {

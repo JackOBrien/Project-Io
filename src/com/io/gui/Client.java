@@ -26,10 +26,14 @@ public class Client {
 
     private Connector connector;
 
+    private UserListWindow userListWindow;
+
     public Client (final Editor editor) {
 
         listening = new StartListening(editor);
         receiving = new StartReceiving(editor, listening);
+
+        userListWindow = new UserListWindow(editor.getProject());
 
         try {
             connector = new Connector();
@@ -57,6 +61,7 @@ public class Client {
             public void applyUserId(Login login, Connector connector) {
                 userId = login.getUserId();
                 username = login.getUsername();
+                userListWindow.addUser(username);
                 System.out.println(editor.getProject().getName() + ": User id is now " + userId);
             }
         });

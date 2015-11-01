@@ -10,7 +10,7 @@ public class UserEdit extends Packet {
 
     public UserEdit(int userId, String editText, int offset, int lengthDifference) {
 
-        super(userId, PacketType.DOCUMENT_EDIT.id());
+        super(userId, PacketType.DOCUMENT_EDIT);
 
         this.editText = editText;
         this.offset = offset;
@@ -19,7 +19,7 @@ public class UserEdit extends Packet {
 
     public UserEdit(int userId, int offset, int lengthDifference) {
 
-        super(userId, PacketType.CURSOR_MOVE.id());
+        super(userId, PacketType.CURSOR_MOVE);
 
         this.editText = null;
         this.offset = offset;

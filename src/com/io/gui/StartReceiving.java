@@ -20,8 +20,11 @@ public class StartReceiving {
         Project project = editor.getProject();
         Document document = editor.getDocument();
 
-        //Make sure userEdit is not my id
+        // TODO: Make sure userEdit is not my id
         //...
+
+        // TODO: Remove this. -- TESTING ONLY --
+        System.out.println("Applying edit from: " + userEdit.getUserId());
 
         //Apply userEdit
         WriteCommandAction.runWriteCommandAction(project, () -> {

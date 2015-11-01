@@ -15,20 +15,15 @@ import java.util.ArrayList;
 
 public class StartIo extends AnAction {
 
-    ArrayList<Editor> editors;
     public StartListening listening;
     public StartReceiving receiving;
 
     public void actionPerformed(AnActionEvent e) {
 
-        editors = new ArrayList<Editor>();
         final Editor editor = e.getData(LangDataKeys.EDITOR);
-        editors.add(editor);
-
 
         listening = new StartListening(editor);
-        receiving = new StartReceiving(editor, listening.getDocumentListener());
-
+        receiving = new StartReceiving(editor, listening);
 
         final Server server = new Server();
 

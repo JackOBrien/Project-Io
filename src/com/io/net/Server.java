@@ -17,7 +17,8 @@ public class Server implements Runnable {
 
     public final static int PORT = 49578;
 
-    private int nextClientId = 0;
+    //Needs start at 1 because Server is 0
+    private int nextClientId = 1;
 
     private List<ConnectorEvent> listeners = new ArrayList<>();
     private List<ServerConnection> connections = new ArrayList<>();

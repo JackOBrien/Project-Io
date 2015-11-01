@@ -28,7 +28,8 @@ public class Client {
 
     public Client (final Editor editor) {
 
-        setupListeners(editor);
+        listening = new StartListening(editor);
+        receiving = new StartReceiving(editor, listening);
 
         try {
             connector = new Connector();
@@ -63,11 +64,6 @@ public class Client {
         (new Thread(connector)).start();
 
         login();
-    }
-
-    private void setupListeners(Editor editor) {
-        listening = new StartListening(editor);
-        receiving = new StartReceiving(editor, listening.getDocumentListener());
     }
 
     private void login() {

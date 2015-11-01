@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.io.domain.FileTransfer;
 import com.io.domain.Login;
 import com.io.domain.UserEdit;
 import com.io.net.Connector;
@@ -41,6 +42,11 @@ public class StartIo extends AnAction {
                 serverConnection.setUsername(login.getUsername());
                 System.out.println("Sending login with user id " + login.getUserId());
                 server.sendLogin(login);
+            }
+
+            @Override
+            public void applyNewFiles(FileTransfer fileTransfer){
+
             }
         });
 

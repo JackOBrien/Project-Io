@@ -2,6 +2,7 @@ package com.io.gui;
 
 
 import com.intellij.openapi.editor.Editor;
+import com.io.domain.FileTransfer;
 import com.io.domain.Login;
 import com.io.domain.UserEdit;
 import com.io.net.Connector;
@@ -58,6 +59,11 @@ public class Client {
                 userId = login.getUserId();
                 username = login.getUsername();
                 System.out.println(editor.getProject().getName() + ": User id is now " + userId);
+            }
+
+            @Override
+            public void applyNewFiles(FileTransfer fileTransfer){
+
             }
         });
 

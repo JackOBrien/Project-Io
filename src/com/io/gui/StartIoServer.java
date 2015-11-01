@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.io.net.Server;
 
-public class StartIo extends AnAction {
+public class StartIoServer extends AnAction {
 
     public void actionPerformed(AnActionEvent e) {
 

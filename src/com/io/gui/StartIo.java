@@ -9,6 +9,7 @@ import com.io.domain.UserEdit;
 import com.io.net.Connector;
 import com.io.net.Server;
 import com.io.net.ConnectorEvent;
+import com.io.net.ServerConnection;
 
 import java.util.ArrayList;
 
@@ -40,7 +41,9 @@ public class StartIo extends AnAction {
 
             @Override
             public void applyUserId(Login login, Connector connector) {
-                login.setUserId(connector.getUserId());
+                ServerConnection serverConnection = server.findServerConnection(connector);
+                login.setUserId(serverConnection.getUserId());
+                serverConnection.setUsername(login.getUsername());
                 System.out.println("Sending login with user id " + login.getUserId());
                 server.sendLogin(login);
             }

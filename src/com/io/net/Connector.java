@@ -2,9 +2,7 @@ package com.io.net;
 
 import com.io.domain.Login;
 import com.io.domain.Packet;
-import com.io.domain.PacketType;
 import com.io.domain.UserEdit;
-import com.io.gui.Client;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -22,11 +20,6 @@ public class Connector implements Runnable {
     private Socket socket;
     private List<ConnectorEvent> listeners;
 
-    //Used only by the server, because the server has multiple connectors
-    //These probably should not even be in here
-    private int userId;
-    private String username;
-
     /** Client Constructor */
     public Connector() throws IOException {
         socket = new Socket("127.0.0.1", Server.PORT);
@@ -34,16 +27,9 @@ public class Connector implements Runnable {
     }
 
     /** Server Constructor */
-    public Connector(int userId, Socket socket, List<ConnectorEvent> listeners) {
-        this.userId = userId;
-        this.username = Client.INITIAL_USER_NAME;
-
+    public Connector(Socket socket, List<ConnectorEvent> listeners) {
         this.socket = socket;
         this.listeners = listeners;
-    }
-
-    public int getUserId() {
-        return userId;
     }
 
     public void addEventListener(ConnectorEvent connectorEvent) {
@@ -75,9 +61,6 @@ public class Connector implements Runnable {
                 else if (packet.getPacketType() == LOGIN) {
 
                     Login login = (Login) packet;
-
-                    // Logs this user's username
-                    username = login.getUsername();
 
                     for (ConnectorEvent connectorEvent : listeners) {
                         connectorEvent.applyUserId(login, this);

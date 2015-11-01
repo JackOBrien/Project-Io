@@ -55,6 +55,7 @@ public class Client {
             @Override
             public void applyUserId(Login login, Connector connector) {
                 userId = login.getUserId();
+                username = login.getUsername();
                 System.out.println(editor.getProject().getName() + ": User id is now " + userId);
             }
         });

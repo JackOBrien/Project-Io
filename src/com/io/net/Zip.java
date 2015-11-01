@@ -53,6 +53,9 @@ public class Zip
             System.out.println("Output to Zip : " + zipFile);
 
             for(String file : this.fileList){
+                if(file.contains(".git")) {
+                    continue;
+                }
 
                 System.out.println("File Added : " + file);
                 ZipEntry ze= new ZipEntry(file);

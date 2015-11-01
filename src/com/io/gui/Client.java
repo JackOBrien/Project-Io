@@ -7,6 +7,7 @@ import com.io.domain.Login;
 import com.io.domain.UserEdit;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
+import com.io.net.UnZip;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -59,11 +60,24 @@ public class Client {
                 userId = login.getUserId();
                 username = login.getUsername();
                 System.out.println(editor.getProject().getName() + ": User id is now " + userId);
+                requestFiles();
             }
 
             @Override
             public void applyNewFiles(FileTransfer fileTransfer){
+                try {
+                    String zipFile = editor.getProject().getBasePath() + "/test.zip";
+                    String dir = editor.getProject().getBasePath();
+                    fileTransfer.writeFile(zipFile);
 
+                    UnZip unZip = new UnZip(zipFile, dir);
+                    unZip.unZipIt();
+
+                    //TODO Still needs to update the current project to the new project from the new dir
+                }catch (Exception e){
+                    e.getMessage();
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -77,5 +91,11 @@ public class Client {
 
         Login login = new Login(INITIAL_USER_ID, username);
         connector.sendObject(login);
+    }
+
+    private void requestFiles(){
+        FileTransfer fileTransferRequest = new FileTransfer(this.userId);
+
+        connector.sendFileTransferRequest(fileTransferRequest);
     }
 }

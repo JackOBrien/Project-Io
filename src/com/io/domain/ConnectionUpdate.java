@@ -1,16 +1,16 @@
 package com.io.domain;
 
-import java.util.Map;
+import java.util.Hashtable;
 
 public class ConnectionUpdate extends Packet {
-    private Map<Integer, String> userMap;
+    private Hashtable<Integer, String> userTable;
 
-    public ConnectionUpdate(int userId, Map<Integer, String> userMap){
+    public ConnectionUpdate(int userId, Hashtable<Integer, String> userTable){
         super(userId, PacketType.CONNECTION_UPDATE);
-        this.userMap = userMap;
+        this.userTable = userTable;
     }
 
-    public Map<Integer, String> getUserMap() {
-        return userMap;
+    public Hashtable<Integer, String> getUserMap() {
+        return userTable;
     }
 }

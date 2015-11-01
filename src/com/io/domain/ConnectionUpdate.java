@@ -10,7 +10,7 @@ public class ConnectionUpdate extends Packet {
         this.userTable = userTable;
     }
 
-    public Hashtable<Integer, String> getUserMap() {
+    public Hashtable<Integer, String> getUserTable() {
         return userTable;
     }
 }

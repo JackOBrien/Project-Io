@@ -1,6 +1,7 @@
 package com.io.net;
 
 import com.intellij.openapi.editor.Editor;
+import com.io.domain.FileTransfer;
 import com.io.domain.Login;
 import com.io.domain.UserEdit;
 import com.io.gui.EditorEvent;
@@ -8,6 +9,7 @@ import com.io.gui.StartListening;
 import com.io.gui.StartReceiving;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -75,6 +77,25 @@ public class Server implements Runnable {
                 serverConnection.setUsername(login.getUsername());
                 System.out.println("Sending login with user id " + login.getUserId());
                 sendLogin(login);
+            }
+
+            @Override
+            public void applyNewFiles(FileTransfer fileTransferRequest){
+                try {
+                    String zipFile = editor.getProject().getBasePath() + "/test.zip";
+                    String dir = editor.getProject().getBasePath();
+
+                    Zip zip = new Zip(dir, zipFile);
+                    zip.generateFileList(new File(dir));
+                    zip.zipIt(zipFile);
+
+                    FileTransfer fileTransfer = new FileTransfer(fileTransferRequest.getUserId(), zipFile);
+
+                    sendFileTransfer(fileTransfer);
+                }catch (Exception e){
+                    e.getMessage();
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -150,6 +171,17 @@ public class Server implements Runnable {
         for (ServerConnection connection : connections) {
             if (connection.getUserId() == id) {
                 connection.getConnector().sendObject(login);
+                break;
+            }
+        }
+    }
+
+    public void sendFileTransfer(FileTransfer fileTransfer) {
+        int id = fileTransfer.getUserId();
+
+        for (ServerConnection connection : connections) {
+            if (connection.getUserId() == id) {
+                connection.getConnector().sendObject(fileTransfer);
                 break;
             }
         }

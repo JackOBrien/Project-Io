@@ -4,5 +4,6 @@ public enum PacketType {
     DOCUMENT_EDIT,
     CURSOR_MOVE,
     LOGIN,
-    FILE_TRANSFER
+    FILE_TRANSFER,
+    CONNECTION_UPDATE
 }

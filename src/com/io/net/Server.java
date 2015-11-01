@@ -84,11 +84,12 @@ public class Server implements Runnable {
 
                 userListWindow.addUser(login.getUsername());
 
-                sendCurrentUserList(serverConnection.getUserId());
+                sendCurrentUserList(serverConnection.getUserId(), connector);
                 broadcastNewUser(serverConnection.getUserId(), serverConnection.getUsername());
 
                 System.out.println("Sending login with user id " + login.getUserId());
-                sendLogin(login);
+
+                connector.sendLogin(login);
             }
 
             @Override
@@ -163,7 +164,7 @@ public class Server implements Runnable {
         }
     }
 
-    public void sendCurrentUserList(int userId) {
+    public void sendCurrentUserList(int userId, Connector connector) {
 
         ArrayList<Pair<Integer, String>> newUsers = new ArrayList<Pair<Integer, String>>();
 
@@ -176,13 +177,7 @@ public class Server implements Runnable {
         }
 
         ConnectionUpdate connectionUpdate = new ConnectionUpdate(0, newUsers);
-
-        for (ServerConnection connection : connections) {
-            if (connection.getUserId() == userId) {
-                connection.getConnector().sendObject(connectionUpdate);
-                break;
-            }
-        }
+        connector.sendConnectionUpdate(connectionUpdate);
     }
 
     public void broadcastNewUser(int userId, String username) {
@@ -192,17 +187,6 @@ public class Server implements Runnable {
         for (ServerConnection connection: connections) {
             if (connection.getUserId() != userId) {
                 connection.getConnector().sendConnectionUpdate(connectionUpdate);
-            }
-        }
-    }
-
-    public void sendLogin(Login login) {
-        int id = login.getUserId();
-
-        for (ServerConnection connection : connections) {
-            if (connection.getUserId() == id) {
-                connection.getConnector().sendObject(login);
-                break;
             }
         }
     }

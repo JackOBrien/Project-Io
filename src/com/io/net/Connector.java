@@ -103,4 +103,8 @@ public class Connector implements Runnable {
         sendObject(connectionUpdate);
     }
 
+    public void sendLogin(Login login) {
+        sendObject(login);
+    }
+
 }

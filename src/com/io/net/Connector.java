@@ -101,7 +101,7 @@ public class Connector implements Runnable {
         sendObject(userEdit);
     }
 
-    public void sendFile(FileTransfer fileTransfer) {
+    public void sendFileTransferRequest(FileTransfer fileTransfer) {
         sendObject(fileTransfer);
     }
 }

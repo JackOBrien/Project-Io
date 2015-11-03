@@ -164,8 +164,10 @@ public class Server implements Runnable {
 
         ArrayList<UserInfo> newUsers = new ArrayList<>();
 
-        newUsers.add(new UserInfo(userId, username));
+        //Add self as user
+        newUsers.add(new UserInfo(this.userId, this.username));
 
+        //Add connections other than destination connections
         for (ServerConnection connection: connections) {
             if (connection.getUserId() != userId) {
                 newUsers.add(new UserInfo(connection.getUserId(), connection.getUsername()));

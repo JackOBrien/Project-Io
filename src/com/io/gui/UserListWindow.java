@@ -14,7 +14,7 @@ import javax.swing.*;
 
 public class UserListWindow extends JPanel {
 
-    private DefaultListModel<String> users;
+    private DefaultListModel<UserInfo> users;
 
     public UserListWindow(Project project) {
 
@@ -31,7 +31,7 @@ public class UserListWindow extends JPanel {
 
     }
 
-    public void addUser(String user) {
+    public void addUser(UserInfo user) {
         ApplicationManager.getApplication().invokeLater(() -> {
             this.users.addElement(user);
         });

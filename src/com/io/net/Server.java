@@ -1,11 +1,10 @@
 package com.io.net;
 
 import com.intellij.openapi.editor.Editor;
+import com.io.domain.ConnectionUpdate;
 import com.io.domain.Login;
 import com.io.domain.UserEdit;
-import com.io.gui.EditorEvent;
-import com.io.gui.StartListening;
-import com.io.gui.StartReceiving;
+import com.io.gui.*;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -40,6 +39,8 @@ public class Server implements Runnable {
     private List<ServerConnection> connections = new ArrayList<>();
     private Hashtable<Connector, ServerConnection> connectionLookup = new Hashtable<>();
 
+    private UserListWindow userListWindow;
+
     public Server(final Editor editor) {
 
         listening = new StartListening(editor);
@@ -50,6 +51,9 @@ public class Server implements Runnable {
         if (username.isEmpty()) {
             username = INITIAL_USER_NAME;
         }
+
+        userListWindow = new UserListWindow(editor.getProject());
+        userListWindow.addUser(new UserInfo(userId, username));
 
         this.addListener(new ConnectorEvent() {
             @Override
@@ -73,8 +77,20 @@ public class Server implements Runnable {
                 ServerConnection serverConnection = findServerConnection(connector);
                 login.setUserId(serverConnection.getUserId());
                 serverConnection.setUsername(login.getUsername());
+
+                userListWindow.addUser(new UserInfo(login.getUserId(), login.getUsername()));
+
+                sendCurrentUserList(serverConnection.getUserId(), connector);
+                broadcastNewUser(serverConnection.getUserId(), serverConnection.getUsername());
+
                 System.out.println("Sending login with user id " + login.getUserId());
-                sendLogin(login);
+
+                connector.sendLogin(login);
+            }
+
+            @Override
+            public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
+                //Should never get one
             }
         });
 
@@ -137,20 +153,38 @@ public class Server implements Runnable {
     }
 
     public void broadcastEdit(UserEdit userEdit) {
-        for (ServerConnection connection : connections) {
+        for (ServerConnection connection: connections) {
             if (connection.getUserId() != userEdit.getUserId()) {
                 connection.getConnector().sendUserEdit(userEdit);
             }
         }
     }
 
-    public void sendLogin(Login login) {
-        int id = login.getUserId();
+    public void sendCurrentUserList(int userId, Connector connector) {
 
-        for (ServerConnection connection : connections) {
-            if (connection.getUserId() == id) {
-                connection.getConnector().sendObject(login);
-                break;
+        ArrayList<UserInfo> newUsers = new ArrayList<>();
+
+        //Add self as user
+        newUsers.add(new UserInfo(this.userId, this.username));
+
+        //Add connections other than destination connections
+        for (ServerConnection connection: connections) {
+            if (connection.getUserId() != userId) {
+                newUsers.add(new UserInfo(connection.getUserId(), connection.getUsername()));
+            }
+        }
+
+        ConnectionUpdate connectionUpdate = new ConnectionUpdate(0, newUsers);
+        connector.sendConnectionUpdate(connectionUpdate);
+    }
+
+    public void broadcastNewUser(int userId, String username) {
+        ArrayList<UserInfo> newUsers = new ArrayList<UserInfo>();
+        newUsers.add(new UserInfo(userId, username));
+        ConnectionUpdate connectionUpdate = new ConnectionUpdate(0, newUsers);
+        for (ServerConnection connection: connections) {
+            if (connection.getUserId() != userId) {
+                connection.getConnector().sendConnectionUpdate(connectionUpdate);
             }
         }
     }

@@ -1,8 +1,6 @@
 package com.io.net;
 
-import com.io.domain.Login;
-import com.io.domain.Packet;
-import com.io.domain.UserEdit;
+import com.io.domain.*;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -66,6 +64,15 @@ public class Connector implements Runnable {
                         connectorEvent.applyUserId(login, this);
                     }
                 }
+                else if (packet.getPacketType() == PacketType.CONNECTION_UPDATE) {
+
+                    ConnectionUpdate connectionUpdate = (ConnectionUpdate) packet;
+
+                    for (ConnectorEvent connectorEvent : listeners) {
+                        connectorEvent.applyConnectionUpdate(connectionUpdate);
+                    }
+
+                }
             }
             catch (IOException ex) {
 
@@ -90,6 +97,14 @@ public class Connector implements Runnable {
 
     public void sendUserEdit(UserEdit userEdit) {
         sendObject(userEdit);
+    }
+
+    public void sendConnectionUpdate(ConnectionUpdate connectionUpdate) {
+        sendObject(connectionUpdate);
+    }
+
+    public void sendLogin(Login login) {
+        sendObject(login);
     }
 
 }

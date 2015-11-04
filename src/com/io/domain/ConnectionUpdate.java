@@ -1,16 +1,19 @@
 package com.io.domain;
 
-import java.util.Map;
+
+import com.io.gui.UserInfo;
+
+import java.util.ArrayList;
 
 public class ConnectionUpdate extends Packet {
-    private Map<Integer, String> userMap;
+    private ArrayList<UserInfo> userTable;
 
-    public ConnectionUpdate(int userId, Map<Integer, String> userMap){
+    public ConnectionUpdate(int userId, ArrayList<UserInfo> userTable){
         super(userId, PacketType.CONNECTION_UPDATE);
-        this.userMap = userMap;
+        this.userTable = userTable;
     }
 
-    public Map<Integer, String> getUserMap() {
-        return userMap;
+    public ArrayList<UserInfo> getUserList() {
+        return userTable;
     }
 }

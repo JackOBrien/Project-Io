@@ -1,7 +1,7 @@
 package com.io.domain;
 
 public class FileTransfer extends Packet{
-    public FileTransfer(){
-        super(PacketType.FILE_TRANSFER.id());
+    public FileTransfer(int userId){
+        super(userId, PacketType.FILE_TRANSFER);
     }
 }

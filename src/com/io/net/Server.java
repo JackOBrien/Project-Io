@@ -1,11 +1,17 @@
 package com.io.net;
 
+import com.intellij.openapi.editor.Editor;
+import com.io.domain.ConnectionUpdate;
+import com.io.domain.Login;
 import com.io.domain.UserEdit;
+import com.io.gui.*;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,8 +21,91 @@ public class Server implements Runnable {
 
     public final static int PORT = 49578;
 
+    public static final int INITIAL_USER_ID = 0;
+
+    public static final String INITIAL_USER_NAME = "host";
+
+    private String username;
+
+    private int userId;
+
+    public StartListening listening;
+    public StartReceiving receiving;
+
+    //Needs start at 1 because Server is 0
+    private int nextClientId = 1;
+
     private List<ConnectorEvent> listeners = new ArrayList<>();
-    private List<Connector> workers = new ArrayList<>();
+    private List<ServerConnection> connections = new ArrayList<>();
+    private Hashtable<Connector, ServerConnection> connectionLookup = new Hashtable<>();
+
+    private UserListWindow userListWindow;
+
+    public Server(final Editor editor) {
+
+        listening = new StartListening(editor);
+        receiving = new StartReceiving(editor, listening);
+
+        userId = INITIAL_USER_ID;
+        username = JOptionPane.showInputDialog("Please enter a username");
+        if (username.isEmpty()) {
+            username = INITIAL_USER_NAME;
+        }
+
+        userListWindow = new UserListWindow(editor.getProject());
+        userListWindow.addUser(new UserInfo(userId, username));
+
+        this.addListener(new ConnectorEvent() {
+            @Override
+            public void applyUserEdit(UserEdit userEdit) {
+                receiving.applyUserEditToDocument(editor, userEdit);
+
+                String editorsName = "<Not Found>";
+
+                for (ServerConnection s : connectionLookup.values()) {
+                    if (s.getUserId() == userEdit.getUserId()) {
+                        editorsName = s.getUsername();
+                    }
+                }
+
+                System.out.println(" -- Server received edit from: " + editorsName);
+                broadcastEdit(userEdit);
+            }
+
+            @Override
+            public void applyUserId(Login login, Connector connector) {
+                ServerConnection serverConnection = findServerConnection(connector);
+                login.setUserId(serverConnection.getUserId());
+                serverConnection.setUsername(login.getUsername());
+
+                userListWindow.addUser(new UserInfo(login.getUserId(), login.getUsername()));
+
+                sendCurrentUserList(serverConnection.getUserId(), connector);
+                broadcastNewUser(serverConnection.getUserId(), serverConnection.getUsername());
+
+                System.out.println("Sending login with user id " + login.getUserId());
+
+                connector.sendLogin(login);
+            }
+
+            @Override
+            public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
+                //Should never get one
+            }
+        });
+
+        listening.addEventListener(new EditorEvent() {
+            @Override
+            public void sendChange(UserEdit userEdit) {
+                userEdit.setUserId(userId);
+                broadcastEdit(userEdit);
+            }
+        });
+
+        (new Thread(this)).start();
+        System.out.println("Server started");
+
+    }
 
     public void startServer() {
 
@@ -37,9 +126,14 @@ public class Server implements Runnable {
                 // Create the Client Socket
                 Socket clientSocket = serverSocket.accept();
 
-                Connector serverWorker = new Connector(clientSocket, listeners);
-                workers.add(serverWorker);
-                executorService.execute(serverWorker);
+                Connector connector = new Connector(clientSocket, listeners);
+
+                ServerConnection serverConnection = new ServerConnection(nextClientId++, connector);
+
+                connectionLookup.put(connector, serverConnection);
+
+                connections.add(serverConnection);
+                executorService.execute(connector);
             }
 
         } catch (Exception e) {
@@ -54,9 +148,44 @@ public class Server implements Runnable {
         listeners.add(connectorEvent);
     }
 
+    public ServerConnection findServerConnection(Connector connector) {
+        return connectionLookup.get(connector);
+    }
+
     public void broadcastEdit(UserEdit userEdit) {
-        for (Connector worker : workers) {
-            worker.sendUserEdit(userEdit);
+        for (ServerConnection connection: connections) {
+            if (connection.getUserId() != userEdit.getUserId()) {
+                connection.getConnector().sendUserEdit(userEdit);
+            }
+        }
+    }
+
+    public void sendCurrentUserList(int userId, Connector connector) {
+
+        ArrayList<UserInfo> newUsers = new ArrayList<>();
+
+        //Add self as user
+        newUsers.add(new UserInfo(this.userId, this.username));
+
+        //Add connections other than destination connections
+        for (ServerConnection connection: connections) {
+            if (connection.getUserId() != userId) {
+                newUsers.add(new UserInfo(connection.getUserId(), connection.getUsername()));
+            }
+        }
+
+        ConnectionUpdate connectionUpdate = new ConnectionUpdate(0, newUsers);
+        connector.sendConnectionUpdate(connectionUpdate);
+    }
+
+    public void broadcastNewUser(int userId, String username) {
+        ArrayList<UserInfo> newUsers = new ArrayList<UserInfo>();
+        newUsers.add(new UserInfo(userId, username));
+        ConnectionUpdate connectionUpdate = new ConnectionUpdate(0, newUsers);
+        for (ServerConnection connection: connections) {
+            if (connection.getUserId() != userId) {
+                connection.getConnector().sendConnectionUpdate(connectionUpdate);
+            }
         }
     }
 

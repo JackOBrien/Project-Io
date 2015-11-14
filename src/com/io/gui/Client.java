@@ -1,7 +1,7 @@
 package com.io.gui;
 
 
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.io.domain.FileTransfer;
 import com.io.domain.ConnectionUpdate;
 import com.io.domain.Login;
@@ -32,12 +32,12 @@ public class Client {
 
     private UserListWindow userListWindow;
 
-    public Client (final Editor editor) {
+    public Client (final Project project) {
 
-        listening = new StartListening(editor);
-        receiving = new StartReceiving(editor, listening);
+        listening = new StartListening(project);
+        receiving = new StartReceiving(project, listening);
 
-        userListWindow = new UserListWindow(editor.getProject());
+        userListWindow = new UserListWindow(project);
 
         try {
             connector = new Connector();
@@ -58,7 +58,7 @@ public class Client {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
                 userEdit.setUserId(userId);
-                receiving.applyUserEditToDocument(editor, userEdit);
+                receiving.applyUserEditToDocument(project, userEdit);
             }
 
             @Override
@@ -66,15 +66,15 @@ public class Client {
                 userId = login.getUserId();
                 username = login.getUsername();
                 userListWindow.addUser(new UserInfo(userId, username));
-                System.out.println(editor.getProject().getName() + ": User id is now " + userId);
+                System.out.println(project.getName() + ": User id is now " + userId);
                 requestFiles();
             }
 
             @Override
             public void applyNewFiles(FileTransfer fileTransfer){
                 try {
-                    String zipFile = editor.getProject().getBasePath() + "/test.zip";
-                    String dir = editor.getProject().getBasePath();
+                    String zipFile = project.getBasePath() + "/test.zip";
+                    String dir = project.getBasePath();
                     fileTransfer.writeFile(zipFile);
 
                     UnZip unZip = new UnZip(zipFile, dir);

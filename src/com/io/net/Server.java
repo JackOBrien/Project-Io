@@ -1,6 +1,6 @@
 package com.io.net;
 
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.io.domain.FileTransfer;
 import com.io.domain.ConnectionUpdate;
 import com.io.domain.Login;
@@ -43,10 +43,10 @@ public class Server implements Runnable {
 
     private UserListWindow userListWindow;
 
-    public Server(final Editor editor) {
+    public Server(final Project project) {
 
-        listening = new StartListening(editor);
-        receiving = new StartReceiving(editor, listening);
+        listening = new StartListening(project);
+        receiving = new StartReceiving(project, listening);
 
         userId = INITIAL_USER_ID;
         username = JOptionPane.showInputDialog("Please enter a username");
@@ -54,13 +54,13 @@ public class Server implements Runnable {
             username = INITIAL_USER_NAME;
         }
 
-        userListWindow = new UserListWindow(editor.getProject());
+        userListWindow = new UserListWindow(project);
         userListWindow.addUser(new UserInfo(userId, username));
 
         this.addListener(new ConnectorEvent() {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
-                receiving.applyUserEditToDocument(editor, userEdit);
+                receiving.applyUserEditToDocument(project, userEdit);
 
                 String editorsName = "<Not Found>";
 
@@ -98,8 +98,8 @@ public class Server implements Runnable {
             @Override
             public void applyNewFiles(FileTransfer fileTransferRequest){
                 try {
-                    String zipFile = editor.getProject().getBasePath() + "/test.zip";
-                    String dir = editor.getProject().getBasePath();
+                    String zipFile = project.getBasePath() + "/test.zip";
+                    String dir = project.getBasePath();
 
                     Zip zip = new Zip(dir, zipFile);
                     zip.generateFileList(new File(dir));

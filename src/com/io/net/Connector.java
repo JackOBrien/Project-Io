@@ -4,6 +4,7 @@ import com.io.domain.FileTransfer;
 import com.io.domain.Login;
 import com.io.domain.Packet;
 import com.io.domain.UserEdit;
+import com.io.domain.*;
 
 import java.io.*;
 import java.net.Socket;
@@ -75,6 +76,15 @@ public class Connector implements Runnable {
                         connectorEvent.applyNewFiles(fileTransfer);
                     }
                 }
+
+                else if (packet.getPacketType() == PacketType.CONNECTION_UPDATE) {
+
+                    ConnectionUpdate connectionUpdate = (ConnectionUpdate) packet;
+
+                    for (ConnectorEvent connectorEvent : listeners) {
+                        connectorEvent.applyConnectionUpdate(connectionUpdate);
+                    }
+                }
             }
             catch (IOException ex) {
 
@@ -104,4 +114,13 @@ public class Connector implements Runnable {
     public void sendFileTransferRequest(FileTransfer fileTransfer) {
         sendObject(fileTransfer);
     }
+
+    public void sendConnectionUpdate(ConnectionUpdate connectionUpdate) {
+        sendObject(connectionUpdate);
+    }
+
+    public void sendLogin(Login login) {
+        sendObject(login);
+    }
+
 }

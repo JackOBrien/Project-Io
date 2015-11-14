@@ -3,6 +3,7 @@ package com.io.gui;
 
 import com.intellij.openapi.editor.Editor;
 import com.io.domain.FileTransfer;
+import com.io.domain.ConnectionUpdate;
 import com.io.domain.Login;
 import com.io.domain.UserEdit;
 import com.io.net.Connector;
@@ -11,6 +12,7 @@ import com.io.net.UnZip;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Client {
 
@@ -28,10 +30,14 @@ public class Client {
 
     private Connector connector;
 
+    private UserListWindow userListWindow;
+
     public Client (final Editor editor) {
 
         listening = new StartListening(editor);
         receiving = new StartReceiving(editor, listening);
+
+        userListWindow = new UserListWindow(editor.getProject());
 
         try {
             connector = new Connector();
@@ -59,6 +65,7 @@ public class Client {
             public void applyUserId(Login login, Connector connector) {
                 userId = login.getUserId();
                 username = login.getUsername();
+                userListWindow.addUser(new UserInfo(userId, username));
                 System.out.println(editor.getProject().getName() + ": User id is now " + userId);
                 requestFiles();
             }
@@ -77,6 +84,17 @@ public class Client {
                 }catch (Exception e){
                     e.getMessage();
                     e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
+                ArrayList<UserInfo> users = connectionUpdate.getUserList();
+
+                System.out.println("Client received " + users.size());
+
+                for (UserInfo user : users) {
+                    userListWindow.addUser(user);
                 }
             }
         });

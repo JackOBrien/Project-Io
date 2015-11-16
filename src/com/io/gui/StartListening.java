@@ -28,6 +28,7 @@ public class StartListening {
 
     public StartListening(Editor editor) {
         eventMulticaster.addDocumentListener(documentListener);
+        eventMulticaster.addCaretListener(caretListener);
         project = editor.getProject();
     }
 
@@ -87,8 +88,12 @@ public class StartListening {
 
             int offset = event.getEditor().logicalPositionToOffset(event.getNewPosition());
 
-            // TODO: Still need to get relative path here
-            UserEdit edit = new UserEdit(0, file.getPath(), offset, 0);
+            //Get path relative to project root (e.g. src/Sample.java)
+            Path basePath = Paths.get(project.getBasePath());
+            Path absoluteFilePath = Paths.get(file.getPath());
+            String relativeFilePath = basePath.relativize(absoluteFilePath).toString();
+
+            UserEdit edit = new UserEdit(0, relativeFilePath, offset, 0);
 
             for (EditorEvent editorEvent : events) {
                 editorEvent.sendChange(edit);
@@ -109,10 +114,5 @@ public class StartListening {
      */
     public DocumentListener getDocumentListener() {
         return documentListener;
-    }
-
-    //TODO: Remove this. Testing only.
-    public void setDocumentListener(DocumentListener dl) {
-        documentListener = dl;
     }
 }

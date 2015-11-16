@@ -92,6 +92,11 @@ public class Server implements Runnable {
             public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
                 //Should never get one
             }
+
+            @Override
+            public void applyCursorMove(UserEdit userEdit) {
+                //TODO: Implement method
+            }
         });
 
         listening.addEventListener(new EditorEvent() {

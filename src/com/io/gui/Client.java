@@ -55,7 +55,7 @@ public class Client {
         connector.addEventListener(new ConnectorEvent() {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
-                userEdit.setUserId(userId);
+//                userEdit.setUserId(userId); -- This would override the correct userId.
                 receiving.applyUserEditToDocument(editor, userEdit);
             }
 
@@ -76,6 +76,11 @@ public class Client {
                 for (UserInfo user : users) {
                     userListWindow.addUser(user);
                 }
+            }
+
+            @Override
+            public void applyCursorMove(UserEdit userEdit) {
+                // TODO: Implement method
             }
         });
 

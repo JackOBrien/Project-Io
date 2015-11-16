@@ -10,4 +10,6 @@ public interface ConnectorEvent {
     void applyUserId(Login login, Connector connector);
 
     void applyConnectionUpdate(ConnectionUpdate connectionUpdate);
+
+    void applyCursorMove(UserEdit userEdit);
 }

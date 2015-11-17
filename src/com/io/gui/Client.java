@@ -74,9 +74,13 @@ public class Client {
 
                     System.out.println("Saving project to: " + dir);
 
-                    UnZip unZip = new UnZip(fileTransfer.getContent(), dir);
-                    unZip.unZipIt();
-
+                    try {
+                        UnZip.unZip(fileTransfer.getContent(), dir);
+                    }
+                    catch (IOException ex) {
+                        System.out.println("Failed to unzip project.");
+                        return;
+                    }
 
                     final String dircopy = dir;
                     ApplicationManager.getApplication().invokeLater(() -> {

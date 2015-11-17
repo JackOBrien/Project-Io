@@ -99,10 +99,15 @@ public class Server implements Runnable {
             public void applyNewFiles(FileTransfer fileTransferRequest){
                 try {
                     String dir = project.getBasePath();
+                    byte[] content;
 
-                    Zip zip = new Zip(dir);
-                    zip.generateFileList(new File(dir));
-                    byte[] content = zip.zipIt();
+                    try {
+                        content = Zip.zip(dir);
+                    }
+                    catch (IOException ex) {
+                        System.out.println("Failed to zip project files.");
+                        return;
+                    }
 
                     FileTransfer fileTransfer = new FileTransfer(userId, project.getName(), content);
 

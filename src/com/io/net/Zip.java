@@ -9,104 +9,66 @@ package com.io.net;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 public class Zip
 {
-    List<String> fileList;
-    private String sourceFolder;
-
-    public Zip(String sourceFolder){
-        fileList = new ArrayList<String>();
-        this.sourceFolder = sourceFolder;
-    }
-
-    public static void main(String args[]) {
-        String sourceFolder = "/home/vi1i/git/Project-Io";
-
-        Zip zip = new Zip(sourceFolder);
-        zip.generateFileList(new File(sourceFolder));
-        zip.zipIt();
-    }
-
-    /**
-     * Zip it
-     */
-    public byte[] zipIt(){
+    public static byte[] zip(String sourceFolder) throws IOException {
 
         byte[] buffer = new byte[1024];
+        ArrayList<String> fileList = new ArrayList<String>();
 
-        try{
+        generateFileList(sourceFolder, new File(sourceFolder), fileList);
 
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ZipOutputStream zos = new ZipOutputStream(bos);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ZipOutputStream zos = new ZipOutputStream(bos);
 
-            System.out.println("Output to byte array");
+        System.out.println("Output to byte array");
 
-            for(String file : this.fileList){
-                if(file.contains(".git")) {
-                    continue;
-                }
-
-                System.out.println("File Added : " + file);
-                ZipEntry ze= new ZipEntry(file);
-                zos.putNextEntry(ze);
-
-                FileInputStream in =
-                        new FileInputStream(this.sourceFolder + File.separator + file);
-
-                int len;
-                while ((len = in.read(buffer)) > 0) {
-                    zos.write(buffer, 0, len);
-                }
-
-                in.close();
+        for (String file : fileList) {
+            if (file.contains(".git")) {
+                continue;
             }
 
-            zos.closeEntry();
-            //remember close it
-            zos.close();
+            System.out.println("File Added : " + file);
+            ZipEntry ze = new ZipEntry(file);
+            zos.putNextEntry(ze);
 
-            System.out.println("Done");
+            FileInputStream in = new FileInputStream(sourceFolder + File.separator + file);
 
-            return bos.toByteArray();
+            int len;
+            while ((len = in.read(buffer)) > 0) {
+                zos.write(buffer, 0, len);
+            }
 
-        }catch(IOException ex){
-            ex.printStackTrace();
+            in.close();
         }
 
-        return null;
+        zos.closeEntry();
+        zos.close();
+
+        System.out.println("Done Zipping");
+
+        return bos.toByteArray();
     }
 
-    /**
-     * Traverse a directory and get all files,
-     * and add the file into fileList
-     * @param node file or directory
-     */
-    public void generateFileList(File node){
+    private static void generateFileList(String sourceFolder, File node, ArrayList<String> fileList) {
 
-        //add file only
-        if(node.isFile()){
-            fileList.add(generateZipEntry(node.getAbsoluteFile().toString()));
+        if (node.isFile()) {
+            fileList.add(generateZipEntry(sourceFolder, node.getAbsoluteFile().toString()));
         }
 
-        if(node.isDirectory()){
-            String[] subNote = node.list();
-            for(String filename : subNote){
-                generateFileList(new File(node, filename));
+        if (node.isDirectory()) {
+            String[] subNode = node.list();
+            for (String filename : subNode) {
+                generateFileList(sourceFolder, new File(node, filename), fileList);
             }
         }
 
     }
 
-    /**
-     * Format the file path for zip
-     * @param file file path
-     * @return Formatted file path
-     */
-    private String generateZipEntry(String file){
-        return file.substring(this.sourceFolder.length()+1, file.length());
+    private static String generateZipEntry(String sourceFolder, String file) {
+        return file.substring(sourceFolder.length()+1, file.length());
     }
 }

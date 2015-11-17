@@ -17,35 +17,27 @@ import org.jdom.JDOMException;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public class Client {
 
     public static final int INITIAL_USER_ID = -1;
-
     public static final String INITIAL_USER_NAME = "user";
 
     public StartListening listening;  //TODO: Make private
-
     public StartReceiving receiving;
-
-    private String username;
-
-    private int userId;
-
     private Connector connector;
 
+    private int userId;
+    private String username;
+
     private UserListWindow userListWindow;
+    private Project project;
 
-    public Client (final Project project) {
+    public Client (final Project currentProject) {
 
-        listening = new StartListening(project);
-        receiving = new StartReceiving(project, listening);
-
-        userListWindow = new UserListWindow(project);
+        userListWindow = new UserListWindow();
 
         try {
             connector = new Connector();
@@ -54,19 +46,10 @@ public class Client {
             return;
         }
 
-        listening.addEventListener(new EditorEvent() {
-            @Override
-            public void sendChange(UserEdit userEdit) {
-                userEdit.setUserId(userId);
-                connector.sendUserEdit(userEdit);
-            }
-        });
-
         connector.addEventListener(new ConnectorEvent() {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
-                userEdit.setUserId(userId);
-                receiving.applyUserEditToDocument(project, userEdit);
+
             }
 
             @Override
@@ -74,7 +57,7 @@ public class Client {
                 userId = login.getUserId();
                 username = login.getUsername();
                 userListWindow.addUser(new UserInfo(userId, username));
-                System.out.println(project.getName() + ": User id is now " + userId);
+                System.out.println("User id is now " + userId);
                 requestFiles();
             }
 
@@ -83,7 +66,7 @@ public class Client {
                 try {
 
                     //Get parent directory
-                    String dir = Paths.get(project.getBasePath()).getParent().toString();
+                    String dir = Paths.get(currentProject.getBasePath()).getParent().toString();
 
                     //For testing on one computer
                     dir = Paths.get(dir).getParent().toString() + File.separator + "IdeaProjectsClone";
@@ -96,11 +79,11 @@ public class Client {
                     final String dircopy = dir;
                     ApplicationManager.getApplication().invokeLater(() -> {
                         ProjectManagerEx pm = ProjectManagerEx.getInstanceEx();
-                        Project p = null;
+                        Project newProject = null;
                         System.out.println("Loading project: " + dircopy);
 
                         try {
-                            p = pm.loadProject(dircopy);
+                            newProject = pm.loadProject(dircopy);
                         }
                         catch (IOException ex) {
                             System.out.println("Failed to open project");
@@ -112,9 +95,10 @@ public class Client {
                             System.out.println("Invalid project!");
                         }
 
-                        if (p != null) {
+                        if (newProject != null) {
                             System.out.println("Opening project.");
-                            pm.openProject(p);
+                            pm.openProject(newProject);
+                            loadProject(newProject);
                         }
                     });
 
@@ -140,6 +124,47 @@ public class Client {
         (new Thread(connector)).start();
 
         login();
+    }
+
+    private void loadProject(Project project) {
+        this.project = project;
+
+        listening = new StartListening(project);
+        receiving = new StartReceiving(project, listening);
+
+        userListWindow.attachToProject(project);
+
+        listening.addEventListener(new EditorEvent() {
+            @Override
+            public void sendChange(UserEdit userEdit) {
+                userEdit.setUserId(userId);
+                connector.sendUserEdit(userEdit);
+            }
+        });
+
+        connector.addEventListener(new ConnectorEvent() {
+            @Override
+            public void applyUserEdit(UserEdit userEdit) {
+                userEdit.setUserId(userId);
+                receiving.applyUserEditToDocument(project, userEdit);
+            }
+
+            @Override
+            public void applyUserId(Login login, Connector connector) {
+
+            }
+
+            @Override
+            public void applyNewFiles(FileTransfer fileTransfer) {
+
+            }
+
+            @Override
+            public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
+
+            }
+        });
+
     }
 
     private void login() {

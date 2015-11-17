@@ -98,14 +98,13 @@ public class Server implements Runnable {
             @Override
             public void applyNewFiles(FileTransfer fileTransferRequest){
                 try {
-                    String zipFile = project.getBasePath() + "/test.zip";
                     String dir = project.getBasePath();
 
-                    Zip zip = new Zip(dir, zipFile);
+                    Zip zip = new Zip(dir);
                     zip.generateFileList(new File(dir));
-                    zip.zipIt(zipFile);
+                    byte[] content = zip.zipIt();
 
-                    FileTransfer fileTransfer = new FileTransfer(fileTransferRequest.getUserId(), zipFile);
+                    FileTransfer fileTransfer = new FileTransfer(fileTransferRequest.getUserId(), content);
 
                     sendFileTransfer(fileTransfer);
                 }catch (Exception e){

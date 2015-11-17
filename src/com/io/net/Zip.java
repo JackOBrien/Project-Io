@@ -7,10 +7,7 @@ package com.io.net;
  * There have been modifications tot his file
  */
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -19,38 +16,34 @@ import java.util.zip.ZipOutputStream;
 public class Zip
 {
     List<String> fileList;
-    private String outFile;
     private String sourceFolder;
 
-    public Zip(String sourceFolder, String outFile){
+    public Zip(String sourceFolder){
         fileList = new ArrayList<String>();
         this.sourceFolder = sourceFolder;
-        this.outFile = outFile;
     }
 
     public static void main(String args[]) {
         String sourceFolder = "/home/vi1i/git/Project-Io";
-        String outFile = "/home/vi1i/git/Project-Io/test.zip";
 
-        Zip zip = new Zip(sourceFolder, outFile);
+        Zip zip = new Zip(sourceFolder);
         zip.generateFileList(new File(sourceFolder));
-        zip.zipIt(outFile);
+        zip.zipIt();
     }
 
     /**
      * Zip it
-     * @param zipFile output ZIP file location
      */
-    public void zipIt(String zipFile){
+    public byte[] zipIt(){
 
         byte[] buffer = new byte[1024];
 
         try{
 
-            FileOutputStream fos = new FileOutputStream(zipFile);
-            ZipOutputStream zos = new ZipOutputStream(fos);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ZipOutputStream zos = new ZipOutputStream(bos);
 
-            System.out.println("Output to Zip : " + zipFile);
+            System.out.println("Output to byte array");
 
             for(String file : this.fileList){
                 if(file.contains(".git")) {
@@ -77,9 +70,14 @@ public class Zip
             zos.close();
 
             System.out.println("Done");
+
+            return bos.toByteArray();
+
         }catch(IOException ex){
             ex.printStackTrace();
         }
+
+        return null;
     }
 
     /**

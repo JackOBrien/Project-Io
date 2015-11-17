@@ -7,10 +7,10 @@ package com.io.net;
  * There have been modifications tot his file
  */
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -18,24 +18,37 @@ import java.util.zip.ZipInputStream;
 public class UnZip
 {
     List<String> fileList;
-    private String inputFile;
+    private byte[] inputBytes;
     private String outFolder;
 
     public static void main( String[] args )
     {
-        String inputFile = "/home/vi1i/git/Project-Io/test.zip";
+        String inputFileDir = "/home/vi1i/git/Project-Io/test.zip";
+
+        Path inputFile = Paths.get(inputFileDir);
+
+        byte[] content;
+
+        try {
+            content = Files.readAllBytes(inputFile);
+        }
+        catch (IOException ex) {
+            System.out.println("Failed to read test.zip");
+            return;
+        }
+
         String outFolder = "/home/vi1i/git/Project-Io/unzipTest";
-        UnZip unZip = new UnZip(inputFile, outFolder);
+        UnZip unZip = new UnZip(content, outFolder);
         unZip.unZipIt();
     }
 
     /**
      * Unzip it
-     * @param inputFile input zip file
+     * @param inputBytes input byte array
      * @param outFolder zip file output folder
      */
-    public UnZip(String inputFile, String outFolder){
-        this.inputFile = inputFile;
+    public UnZip(byte[] inputBytes, String outFolder){
+        this.inputBytes = inputBytes;
         this.outFolder = outFolder;
     }
     public void unZipIt(){
@@ -50,9 +63,10 @@ public class UnZip
                 folder.mkdir();
             }
 
-            //get the zip file content
-            ZipInputStream zis =
-                    new ZipInputStream(new FileInputStream(this.inputFile));
+            //create input zip stream from byte array
+            ByteArrayInputStream byteStream = new ByteArrayInputStream(this.inputBytes);
+            ZipInputStream zis = new ZipInputStream(byteStream);
+
             //get the zipped file list entry
             ZipEntry ze = zis.getNextEntry();
 

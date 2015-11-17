@@ -1,7 +1,10 @@
 package com.io.gui;
 
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.InvalidDataException;
 import com.io.domain.FileTransfer;
 import com.io.domain.ConnectionUpdate;
 import com.io.domain.Login;
@@ -9,9 +12,14 @@ import com.io.domain.UserEdit;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
 import com.io.net.UnZip;
+import org.jdom.JDOMException;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public class Client {
@@ -73,12 +81,42 @@ public class Client {
             @Override
             public void applyNewFiles(FileTransfer fileTransfer){
                 try {
-                    String zipFile = project.getBasePath() + "/test.zip";
-                    String dir = project.getBasePath();
-                    fileTransfer.writeFile(zipFile);
 
-                    UnZip unZip = new UnZip(zipFile, dir);
+                    //Get parent directory
+                    String dir = Paths.get(project.getBasePath()).getParent().toString();
+
+                    //For testing on one computer
+                    dir = Paths.get(dir).getParent().toString() + File.separator + "IdeaProjectsClone";
+
+
+                    UnZip unZip = new UnZip(fileTransfer.getContent(), dir);
                     unZip.unZipIt();
+
+
+                    final String dircopy = dir;
+                    ApplicationManager.getApplication().invokeLater(() -> {
+                        ProjectManagerEx pm = ProjectManagerEx.getInstanceEx();
+                        Project p = null;
+                        System.out.println("Loading project: " + dircopy);
+
+                        try {
+                            p = pm.loadProject(dircopy);
+                        }
+                        catch (IOException ex) {
+                            System.out.println("Failed to open project");
+                        }
+                        catch (JDOMException ex) {
+                            ex.printStackTrace();
+                        }
+                        catch (InvalidDataException ex) {
+                            System.out.println("Invalid project!");
+                        }
+
+                        if (p != null) {
+                            System.out.println("Opening project.");
+                            pm.openProject(p);
+                        }
+                    });
 
                     //TODO Still needs to update the current project to the new project from the new dir
                 }catch (Exception e){

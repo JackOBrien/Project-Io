@@ -69,8 +69,10 @@ public class Client {
                     String dir = Paths.get(currentProject.getBasePath()).getParent().toString();
 
                     //For testing on one computer
-                    dir = Paths.get(dir).getParent().toString() + File.separator + "IdeaProjectsClone";
+                    String parent = Paths.get(dir).getParent().toString();
+                    dir = Paths.get(parent, "IdeaProjectIO", fileTransfer.getProjectName()).toString();
 
+                    System.out.println("Saving project to: " + dir);
 
                     UnZip unZip = new UnZip(fileTransfer.getContent(), dir);
                     unZip.unZipIt();

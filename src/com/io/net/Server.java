@@ -104,9 +104,9 @@ public class Server implements Runnable {
                     zip.generateFileList(new File(dir));
                     byte[] content = zip.zipIt();
 
-                    FileTransfer fileTransfer = new FileTransfer(fileTransferRequest.getUserId(), content);
+                    FileTransfer fileTransfer = new FileTransfer(userId, project.getName(), content);
 
-                    sendFileTransfer(fileTransfer);
+                    sendFileTransfer(fileTransferRequest.getUserId(), fileTransfer);
                 }catch (Exception e){
                     e.getMessage();
                     e.printStackTrace();
@@ -209,11 +209,9 @@ public class Server implements Runnable {
         }
     }
 
-    public void sendFileTransfer(FileTransfer fileTransfer) {
-        int id = fileTransfer.getUserId();
-
+    public void sendFileTransfer(int userId, FileTransfer fileTransfer) {
         for (ServerConnection connection : connections) {
-            if (connection.getUserId() == id) {
+            if (connection.getUserId() == userId) {
                 connection.getConnector().sendObject(fileTransfer);
                 break;
             }

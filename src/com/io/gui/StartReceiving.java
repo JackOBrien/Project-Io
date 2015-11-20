@@ -2,7 +2,6 @@ package com.io.gui;
 
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -16,13 +15,11 @@ public class StartReceiving {
 
     StartListening listener;
 
-    public StartReceiving(Editor editor, StartListening listener) {
+    public StartReceiving(Project project, StartListening listener) {
         this.listener = listener;
     }
 
-    public void applyUserEditToDocument(Editor editor, UserEdit userEdit) {
-
-        Project project = editor.getProject();
+    public void applyUserEditToDocument(Project project, UserEdit userEdit) {
 
         System.out.println(userEdit.getFilePath());
 
@@ -45,7 +42,8 @@ public class StartReceiving {
         //Apply userEdit
         WriteCommandAction.runWriteCommandAction(project, () -> {
             if (userEdit.getEditText() == null) {
-                editor.getCaretModel().moveToOffset(userEdit.getOffset());
+                //Move cursor
+                //editor.getCaretModel().moveToOffset(userEdit.getOffset());
             }
             else {
                 synchronized (this) {

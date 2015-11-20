@@ -1,12 +1,14 @@
 package com.io.net;
 
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.io.domain.FileTransfer;
 import com.io.domain.ConnectionUpdate;
 import com.io.domain.Login;
 import com.io.domain.UserEdit;
 import com.io.gui.*;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -41,10 +43,10 @@ public class Server implements Runnable {
 
     private UserListWindow userListWindow;
 
-    public Server(final Editor editor) {
+    public Server(final Project project) {
 
-        listening = new StartListening(editor);
-        receiving = new StartReceiving(editor, listening);
+        listening = new StartListening(project);
+        receiving = new StartReceiving(project, listening);
 
         userId = INITIAL_USER_ID;
         username = JOptionPane.showInputDialog("Please enter a username");
@@ -52,13 +54,13 @@ public class Server implements Runnable {
             username = INITIAL_USER_NAME;
         }
 
-        userListWindow = new UserListWindow(editor.getProject());
+        userListWindow = new UserListWindow(project);
         userListWindow.addUser(new UserInfo(userId, username));
 
         this.addListener(new ConnectorEvent() {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
-                receiving.applyUserEditToDocument(editor, userEdit);
+                receiving.applyUserEditToDocument(project, userEdit);
 
                 String editorsName = "<Not Found>";
 
@@ -91,6 +93,29 @@ public class Server implements Runnable {
             @Override
             public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
                 //Should never get one
+            }
+
+            @Override
+            public void applyNewFiles(FileTransfer fileTransferRequest){
+                try {
+                    String dir = project.getBasePath();
+                    byte[] content;
+
+                    try {
+                        content = Zip.zip(dir);
+                    }
+                    catch (IOException ex) {
+                        System.out.println("Failed to zip project files.");
+                        return;
+                    }
+
+                    FileTransfer fileTransfer = new FileTransfer(userId, project.getName(), content);
+
+                    sendFileTransfer(fileTransferRequest.getUserId(), fileTransfer);
+                }catch (Exception e){
+                    e.getMessage();
+                    e.printStackTrace();
+                }
             }
         });
 
@@ -185,6 +210,15 @@ public class Server implements Runnable {
         for (ServerConnection connection: connections) {
             if (connection.getUserId() != userId) {
                 connection.getConnector().sendConnectionUpdate(connectionUpdate);
+            }
+        }
+    }
+
+    public void sendFileTransfer(int userId, FileTransfer fileTransfer) {
+        for (ServerConnection connection : connections) {
+            if (connection.getUserId() == userId) {
+                connection.getConnector().sendObject(fileTransfer);
+                break;
             }
         }
     }

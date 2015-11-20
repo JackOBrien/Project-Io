@@ -1,6 +1,5 @@
 package com.io.gui;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -26,9 +25,9 @@ public class StartListening {
     public boolean isListening = true;
     private Project project;
 
-    public StartListening(Editor editor) {
+    public StartListening(Project project) {
         eventMulticaster.addDocumentListener(documentListener);
-        project = editor.getProject();
+        this.project = project;
     }
 
     public void addEventListener(EditorEvent editorEvent) {

@@ -74,4 +74,14 @@ public class UserListWindow extends JPanel {
         chatArea.append(message + System.lineSeparator());
     }
 
+    public String getUsernameById(int userId) {
+        for (int i = 0; i < users.size(); i++) {
+            UserInfo userInfo = users.getElementAt(i);
+            if (userInfo.getUserId() == userId) {
+                return userInfo.getUsername();
+            }
+        }
+        return "<Not Found>";
+    }
+
 }

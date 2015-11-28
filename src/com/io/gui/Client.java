@@ -5,17 +5,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.InvalidDataException;
-import com.io.domain.FileTransfer;
-import com.io.domain.ConnectionUpdate;
-import com.io.domain.Login;
-import com.io.domain.UserEdit;
+import com.io.domain.*;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
 import com.io.net.UnZip;
 import org.jdom.JDOMException;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -45,6 +41,18 @@ public class Client {
             System.out.println("Failed to connect to server");
             return;
         }
+
+        //Send chat messages to server
+        userListWindow.onNewChatMessage((message) -> {
+            System.out.println("User [" + username + "] says: " + message);
+
+            ChatMessage chatMessage = new ChatMessage(userId, message);
+
+            String output = username + ": " + message;
+            userListWindow.appendChatMessage(output);
+
+            connector.sendChatMessage(chatMessage);
+        });
 
         connector.addEventListener(new ConnectorEvent() {
             @Override
@@ -125,6 +133,19 @@ public class Client {
                     userListWindow.addUser(user);
                 }
             }
+
+            @Override
+            public void applyChatMessage(ChatMessage chatMessage, Connector connector) {
+
+                //Build message output
+                String username = userListWindow.getUsernameById(chatMessage.getUserId());
+                String output = username + ": " + chatMessage.getMessage();
+
+                //Print chat message to screen
+                userListWindow.appendChatMessage(output);
+
+            }
+
         });
 
         (new Thread(connector)).start();
@@ -167,6 +188,11 @@ public class Client {
 
             @Override
             public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
+
+            }
+
+            @Override
+            public void applyChatMessage(ChatMessage chatMessage, Connector connector) {
 
             }
         });

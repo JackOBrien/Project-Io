@@ -16,4 +16,12 @@ public class UserInfo implements Serializable {
         return this.username + " (" + this.userId + ")";
     }
 
+    public int getUserId() {
+        return this.userId;
+    }
+
+    public String getUsername() {
+        return this.username;
+    }
+
 }

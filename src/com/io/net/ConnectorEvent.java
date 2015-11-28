@@ -1,9 +1,6 @@
 package com.io.net;
 
-import com.io.domain.FileTransfer;
-import com.io.domain.ConnectionUpdate;
-import com.io.domain.Login;
-import com.io.domain.UserEdit;
+import com.io.domain.*;
 
 public interface ConnectorEvent {
     void applyUserEdit(UserEdit userEdit);
@@ -12,4 +9,6 @@ public interface ConnectorEvent {
 
     void applyNewFiles(FileTransfer fileTransfer);
     void applyConnectionUpdate(ConnectionUpdate connectionUpdate);
+
+    void applyChatMessage(ChatMessage chatMessage, Connector connector);
 }

@@ -1,10 +1,7 @@
 package com.io.net;
 
 import com.intellij.openapi.project.Project;
-import com.io.domain.FileTransfer;
-import com.io.domain.ConnectionUpdate;
-import com.io.domain.Login;
-import com.io.domain.UserEdit;
+import com.io.domain.*;
 import com.io.gui.*;
 
 import javax.swing.*;
@@ -57,6 +54,21 @@ public class Server implements Runnable {
         userListWindow = new UserListWindow(project);
         userListWindow.addUser(new UserInfo(userId, username));
 
+        //Broadcast chat messages from server user
+        userListWindow.onNewChatMessage((message) -> {
+            System.out.println("User [" + username + "] says: " + message);
+
+            ChatMessage chatMessage = new ChatMessage(userId, message);
+
+            String output = username + ": " + message;
+            userListWindow.appendChatMessage(output);
+
+            //Sent to all clients
+            for (ServerConnection connection : connections) {
+                connection.getConnector().sendChatMessage(chatMessage);
+            }
+        });
+
         this.addListener(new ConnectorEvent() {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
@@ -64,9 +76,9 @@ public class Server implements Runnable {
 
                 String editorsName = "<Not Found>";
 
-                for (ServerConnection s : connectionLookup.values()) {
-                    if (s.getUserId() == userEdit.getUserId()) {
-                        editorsName = s.getUsername();
+                for (ServerConnection connection : connections) {
+                    if (connection.getUserId() == userEdit.getUserId()) {
+                        editorsName = connection.getUsername();
                     }
                 }
 
@@ -116,6 +128,25 @@ public class Server implements Runnable {
                     e.getMessage();
                     e.printStackTrace();
                 }
+            }
+
+            @Override
+            public void applyChatMessage(ChatMessage chatMessage, Connector connector) {
+
+                //Build message output
+                ServerConnection connection = findServerConnection(connector);
+                String output = connection.getUsername() + ": " + chatMessage.getMessage();
+
+                //Print chat message to screen
+                userListWindow.appendChatMessage(output);
+
+                //Broadcast message to all other clients
+                for (ServerConnection conn : connections) {
+                    if (conn.getUserId() != chatMessage.getUserId()) {
+                        conn.getConnector().sendChatMessage(chatMessage);
+                    }
+                }
+
             }
         });
 

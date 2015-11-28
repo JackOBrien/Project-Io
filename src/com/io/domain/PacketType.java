@@ -5,5 +5,6 @@ public enum PacketType {
     CURSOR_MOVE,
     LOGIN,
     FILE_TRANSFER,
-    CONNECTION_UPDATE
+    CONNECTION_UPDATE,
+    CHAT_MESSAGE
 }

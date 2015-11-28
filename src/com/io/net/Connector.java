@@ -85,6 +85,16 @@ public class Connector implements Runnable {
                         connectorEvent.applyConnectionUpdate(connectionUpdate);
                     }
                 }
+
+                else if (packet.getPacketType() == PacketType.CHAT_MESSAGE) {
+
+                    ChatMessage chatMessage = (ChatMessage) packet;
+
+                    for (ConnectorEvent connectorEvent : listeners) {
+                        connectorEvent.applyChatMessage(chatMessage, this);
+                    }
+
+                }
             }
             catch (IOException ex) {
 
@@ -121,6 +131,10 @@ public class Connector implements Runnable {
 
     public void sendLogin(Login login) {
         sendObject(login);
+    }
+
+    public void sendChatMessage(ChatMessage chatMessage) {
+        sendObject(chatMessage);
     }
 
 }

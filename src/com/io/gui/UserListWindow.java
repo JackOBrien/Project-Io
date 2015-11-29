@@ -16,19 +16,23 @@ public class UserListWindow extends JPanel {
 
     private DefaultListModel<UserInfo> users;
 
-    public UserListWindow(Project project) {
-
-        //Add panel as a Tool Window
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-        ToolWindow toolWindow = toolWindowManager.registerToolWindow("User List", true, ToolWindowAnchor.LEFT);
-        Content content = ContentFactory.SERVICE.getInstance().createContent(this, "", true);
-        toolWindow.getContentManager().addContent(content);
-
+    public UserListWindow() {
         users = new DefaultListModel<>();
         JBList userList = new JBList(users);
 
         this.add(userList);
+    }
 
+    public UserListWindow(Project project) {
+        this();
+        attachToProject(project);
+    }
+
+    public void attachToProject(Project project) {
+        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+        ToolWindow toolWindow = toolWindowManager.registerToolWindow("User List", true, ToolWindowAnchor.LEFT);
+        Content content = ContentFactory.SERVICE.getInstance().createContent(this, "", true);
+        toolWindow.getContentManager().addContent(content);
     }
 
     public void addUser(UserInfo user) {

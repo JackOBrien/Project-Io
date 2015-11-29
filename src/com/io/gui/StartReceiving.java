@@ -4,11 +4,8 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -23,13 +20,11 @@ public class StartReceiving {
 
     StartListening listener;
 
-    public StartReceiving(Editor editor, StartListening listener) {
+    public StartReceiving(Project project, StartListening listener) {
         this.listener = listener;
     }
 
-    public void applyUserEditToDocument(Editor editor, UserEdit userEdit) {
-
-        Project project = editor.getProject();
+    public void applyUserEditToDocument(Project project, UserEdit userEdit) {
 
         System.out.println(userEdit.getFilePath());
 
@@ -52,7 +47,8 @@ public class StartReceiving {
         //Apply userEdit
         WriteCommandAction.runWriteCommandAction(project, () -> {
             if (userEdit.getEditText() == null) {
-                editor.getCaretModel().moveToOffset(userEdit.getOffset());
+                //Move cursor
+                //editor.getCaretModel().moveToOffset(userEdit.getOffset());
             }
             else {
                 synchronized (this) {
@@ -88,8 +84,7 @@ public class StartReceiving {
         });
     }
 
-    public void applyHighlightToDocument(Editor editor, UserEdit userEdit, CaretListener caretListener) {
-        Project project = editor.getProject();
+    public void applyHighlightToDocument(Project project, UserEdit userEdit) {
 
         WriteCommandAction.runWriteCommandAction(project, () -> {
             String filePath = Paths.get(project.getBasePath(), userEdit.getFilePath()).toString();
@@ -100,8 +95,6 @@ public class StartReceiving {
                 System.out.println("Could not find file.");
                 return;
             }
-
-            editor.getCaretModel().removeCaretListener(caretListener);
 
             Document document = FileDocumentManager.getInstance().getDocument(file);
             Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
@@ -133,8 +126,6 @@ public class StartReceiving {
                 e.getMarkupModel().addRangeHighlighter(start, end,
                         HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
             }
-
-            editor.getCaretModel().addCaretListener(caretListener);
         });
     }
 }

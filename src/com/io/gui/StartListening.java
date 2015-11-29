@@ -1,6 +1,5 @@
 package com.io.gui;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -21,17 +20,15 @@ public class StartListening {
 
     private List<EditorEvent> events = new ArrayList<>();
 
-//    private EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
+    private EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
 
     public boolean isListening = true;
     private Project project;
 
-    public StartListening(Editor editor) {
-//        eventMulticaster.addDocumentListener(documentListener);
-//        eventMulticaster.addCaretListener(caretListener);
-        editor.getCaretModel().addCaretListener(caretListener);
-        editor.getDocument().addDocumentListener(documentListener);
-        project = editor.getProject();
+    public StartListening(Project project) {
+        eventMulticaster.addDocumentListener(documentListener);
+        eventMulticaster.addCaretListener(caretListener);
+        this.project = project;
     }
 
     public void addEventListener(EditorEvent editorEvent) {
@@ -117,9 +114,5 @@ public class StartListening {
      */
     public DocumentListener getDocumentListener() {
         return documentListener;
-    }
-
-    public CaretListener getCaretListener() {
-        return caretListener;
     }
 }

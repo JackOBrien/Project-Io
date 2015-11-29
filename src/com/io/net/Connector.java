@@ -1,11 +1,12 @@
 package com.io.net;
 
+import com.io.domain.FileTransfer;
+import com.io.domain.Login;
+import com.io.domain.Packet;
+import com.io.domain.UserEdit;
 import com.io.domain.*;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,8 +65,18 @@ public class Connector implements Runnable {
                     }
                 }
 
+                /* Looks for packets signifying a new file to transfer */
+                else if(packet.getPacketType() == FILE_TRANSFER) {
+
+                    FileTransfer fileTransfer = (FileTransfer) packet;
+
+                    for (ConnectorEvent connectorEvent : listeners) {
+                        connectorEvent.applyNewFiles(fileTransfer);
+                    }
+                }
+
                 /* Looks for packets signifying a connection update */
-                else if (packet.getPacketType() == CONNECTION_UPDATE) {
+                else if (packet.getPacketType() == PacketType.CONNECTION_UPDATE) {
 
                     ConnectionUpdate connectionUpdate = (ConnectionUpdate) packet;
 
@@ -106,6 +117,10 @@ public class Connector implements Runnable {
 
     public void sendUserEdit(UserEdit userEdit) {
         sendObject(userEdit);
+    }
+
+    public void sendFileTransferRequest(FileTransfer fileTransfer) {
+        sendObject(fileTransfer);
     }
 
     public void sendConnectionUpdate(ConnectionUpdate connectionUpdate) {

@@ -3,13 +3,19 @@ package com.io.gui;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.io.domain.UserEdit;
 
+import java.awt.*;
 import java.nio.file.Paths;
 
 public class StartReceiving {
@@ -79,6 +85,42 @@ public class StartReceiving {
                 }
             }
         });
+
+    }
+
+    public void applyHighlightToDocument(Editor editor, UserEdit userEdit) {
+        Project project = editor.getProject();
+
+        String filePath = Paths.get(project.getBasePath(), userEdit.getFilePath()).toString();
+
+        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
+
+        if (file == null || !ProjectFileIndex.SERVICE.getInstance(project).isInSource(file)) {
+            System.out.println("Could not find file.");
+            return;
+        }
+
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
+
+        final TextAttributes attributes = new TextAttributes();
+        final JBColor color = JBColor.BLUE;
+
+        attributes.setEffectColor(color);
+        attributes.setEffectType(EffectType.SEARCH_MATCH);
+        attributes.setBackgroundColor(color);
+        attributes.setForegroundColor(Color.WHITE);
+
+        int offset = userEdit.getOffset();
+
+        for (Editor e : editors) {
+            for (RangeHighlighter highlighter : e.getMarkupModel().getAllHighlighters()) {
+                highlighter.dispose();
+            }
+
+            e.getMarkupModel().addRangeHighlighter(offset, offset + 1,
+                    HighlighterLayer.ERROR, attributes, HighlighterTargetArea.EXACT_RANGE);
+        }
 
     }
 }

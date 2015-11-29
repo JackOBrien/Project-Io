@@ -80,7 +80,9 @@ public class Client {
 
             @Override
             public void applyCursorMove(UserEdit userEdit) {
-                // TODO: Implement method
+                if (userId == userEdit.getUserId()) return;
+
+                receiving.applyHighlightToDocument(editor, userEdit);
             }
         });
 

@@ -11,6 +11,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -29,8 +30,8 @@ public class UserListWindow extends JPanel {
         this.add(userList);
 
         //Create chat controls
-        chatArea = new JTextArea(10, 100);
-        JTextField chatInput = new JTextField();
+        chatArea = new JTextArea(10, 50);
+        JTextField chatInput = new JTextField(30);
         chatInput.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -70,8 +71,11 @@ public class UserListWindow extends JPanel {
     }
 
     public void appendChatMessage(String message) {
-        message = message.trim();
-        chatArea.append(message + System.lineSeparator());
+        String output = message.trim();
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+            chatArea.append(output + System.lineSeparator());
+        });
     }
 
     public String getUsernameById(int userId) {

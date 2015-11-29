@@ -4,6 +4,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -85,10 +86,9 @@ public class StartReceiving {
                 }
             }
         });
-
     }
 
-    public void applyHighlightToDocument(Editor editor, UserEdit userEdit) {
+    public void applyHighlightToDocument(Editor editor, UserEdit userEdit, CaretListener caretListener) {
         Project project = editor.getProject();
 
         WriteCommandAction.runWriteCommandAction(project, () -> {
@@ -101,6 +101,8 @@ public class StartReceiving {
                 return;
             }
 
+            editor.getCaretModel().removeCaretListener(caretListener);
+
             Document document = FileDocumentManager.getInstance().getDocument(file);
             Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
 
@@ -112,16 +114,27 @@ public class StartReceiving {
             attributes.setBackgroundColor(color);
             attributes.setForegroundColor(Color.WHITE);
 
-            int offset = userEdit.getOffset();
+            int start = userEdit.getOffset();
+            int end = start + 1;
+            int textLength = document.getTextLength();
+
+            if (end > textLength) {
+                end = textLength;
+            }
+            if (start >= textLength) {
+                start = textLength - 1;
+            }
 
             for (Editor e : editors) {
                 for (RangeHighlighter highlighter : e.getMarkupModel().getAllHighlighters()) {
                     highlighter.dispose();
                 }
 
-                e.getMarkupModel().addRangeHighlighter(offset, offset + 1,
+                e.getMarkupModel().addRangeHighlighter(start, end,
                         HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
             }
+
+            editor.getCaretModel().addCaretListener(caretListener);
         });
     }
 }

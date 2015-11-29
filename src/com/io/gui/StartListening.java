@@ -93,7 +93,7 @@ public class StartListening {
             Path absoluteFilePath = Paths.get(file.getPath());
             String relativeFilePath = basePath.relativize(absoluteFilePath).toString();
 
-            UserEdit edit = new UserEdit(0, relativeFilePath, offset, 0);
+            UserEdit edit = new UserEdit(-1, relativeFilePath, offset, 0);
 
             for (EditorEvent editorEvent : events) {
                 editorEvent.sendChange(edit);

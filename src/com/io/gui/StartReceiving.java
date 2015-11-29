@@ -91,36 +91,37 @@ public class StartReceiving {
     public void applyHighlightToDocument(Editor editor, UserEdit userEdit) {
         Project project = editor.getProject();
 
-        String filePath = Paths.get(project.getBasePath(), userEdit.getFilePath()).toString();
+        WriteCommandAction.runWriteCommandAction(project, () -> {
+            String filePath = Paths.get(project.getBasePath(), userEdit.getFilePath()).toString();
 
-        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
+            VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
 
-        if (file == null || !ProjectFileIndex.SERVICE.getInstance(project).isInSource(file)) {
-            System.out.println("Could not find file.");
-            return;
-        }
-
-        Document document = FileDocumentManager.getInstance().getDocument(file);
-        Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
-
-        final TextAttributes attributes = new TextAttributes();
-        final JBColor color = JBColor.BLUE;
-
-        attributes.setEffectColor(color);
-        attributes.setEffectType(EffectType.SEARCH_MATCH);
-        attributes.setBackgroundColor(color);
-        attributes.setForegroundColor(Color.WHITE);
-
-        int offset = userEdit.getOffset();
-
-        for (Editor e : editors) {
-            for (RangeHighlighter highlighter : e.getMarkupModel().getAllHighlighters()) {
-                highlighter.dispose();
+            if (file == null || !ProjectFileIndex.SERVICE.getInstance(project).isInSource(file)) {
+                System.out.println("Could not find file.");
+                return;
             }
 
-            e.getMarkupModel().addRangeHighlighter(offset, offset + 1,
-                    HighlighterLayer.ERROR, attributes, HighlighterTargetArea.EXACT_RANGE);
-        }
+            Document document = FileDocumentManager.getInstance().getDocument(file);
+            Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
 
+            final TextAttributes attributes = new TextAttributes();
+            final JBColor color = JBColor.BLUE;
+
+            attributes.setEffectColor(color);
+            attributes.setEffectType(EffectType.SEARCH_MATCH);
+            attributes.setBackgroundColor(color);
+            attributes.setForegroundColor(Color.WHITE);
+
+            int offset = userEdit.getOffset();
+
+            for (Editor e : editors) {
+                for (RangeHighlighter highlighter : e.getMarkupModel().getAllHighlighters()) {
+                    highlighter.dispose();
+                }
+
+                e.getMarkupModel().addRangeHighlighter(offset, offset + 1,
+                        HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
+            }
+        });
     }
 }

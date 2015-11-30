@@ -12,4 +12,6 @@ public interface ConnectorEvent {
 
     void applyNewFiles(FileTransfer fileTransfer);
     void applyConnectionUpdate(ConnectionUpdate connectionUpdate);
+
+    void applyCursorMove(UserEdit userEdit);
 }

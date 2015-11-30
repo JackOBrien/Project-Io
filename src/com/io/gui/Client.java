@@ -125,6 +125,11 @@ public class Client {
                     userListWindow.addUser(user);
                 }
             }
+
+            @Override
+            public void applyCursorMove(UserEdit userEdit) {
+
+            }
         });
 
         (new Thread(connector)).start();
@@ -168,6 +173,15 @@ public class Client {
             @Override
             public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
 
+            }
+
+            @Override
+            public void applyCursorMove(UserEdit userEdit) {
+                if (userId == userEdit.getUserId()) {
+                    return;
+                }
+
+                receiving.applyHighlightToDocument(project, userEdit);
             }
         });
 

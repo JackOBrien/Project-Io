@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 
@@ -24,13 +25,28 @@ public class UserListWindow extends JPanel {
 
     public UserListWindow() {
 
+        this.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL;
+
         //Create user list
         users = new DefaultListModel<>();
         JBList userList = new JBList(users);
-        this.add(userList);
+
+        c.gridx = 0;
+        c.gridy = 0;
+        c.gridheight = 2;
+        c.ipadx = 50;
+        this.add(userList, c);
 
         //Create chat controls
         chatArea = new JTextArea(10, 50);
+        chatArea.setEditable(false);
+        chatArea.setLineWrap(true);
+
+        JBScrollPane scrollPane = new JBScrollPane(chatArea);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
         JTextField chatInput = new JTextField(30);
         chatInput.addActionListener(new ActionListener() {
             @Override
@@ -43,8 +59,23 @@ public class UserListWindow extends JPanel {
                 }
             }
         });
-        this.add(chatArea);
-        this.add(chatInput);
+
+        c.ipadx = 0;
+        c.gridheight = 1;
+        c.weightx = 0.5;
+        c.ipady = 150;
+        c.gridx = 1;
+        c.gridy = 0;
+        c.gridwidth = 2;
+        c.anchor = GridBagConstraints.PAGE_END;
+        this.add(scrollPane, c);
+
+        c.ipady = 0;
+        c.gridx = 1;
+        c.gridy = 1;
+        c.gridwidth = 2;
+        c.anchor = GridBagConstraints.PAGE_START;
+        this.add(chatInput, c);
 
     }
 

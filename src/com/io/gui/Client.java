@@ -8,6 +8,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.io.domain.*;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
+import com.io.net.Server;
 import com.io.net.UnZip;
 import org.jdom.JDOMException;
 
@@ -67,6 +68,26 @@ public class Client {
                 userListWindow.addUser(new UserInfo(userId, username));
                 System.out.println("User id is now " + userId);
                 requestFiles();
+            }
+
+            @Override
+            public void applyLogout(Logout logout, Connector connector) {
+                userListWindow.removeUserById(logout.getUserId());
+
+                //If server logged out, we are done
+                if (logout.getUserId() == Server.INITIAL_USER_ID) {
+
+                    try {
+                        connector.disconnect();
+                    }
+                    catch (IOException ex) {
+                        System.out.println("Failed to disconnect from server");
+                    }
+
+                    ApplicationManager.getApplication().invokeLater(() -> {
+                        ProjectManagerEx.getInstance().closeProject(project);
+                    });
+                }
             }
 
             @Override
@@ -146,6 +167,15 @@ public class Client {
 
             }
 
+            @Override
+            public void onDisconnect(Connector connector) {
+                System.out.println("Client has disconnected");
+            }
+
+            @Override
+            public void applyCursorMove(UserEdit userEdit) {
+
+            }
         });
 
         (new Thread(connector)).start();
@@ -169,6 +199,18 @@ public class Client {
             }
         });
 
+        IOProject.getInstance(project).addProjectClosedListener(() -> {
+            try {
+                Logout logout = new Logout(userId);
+                connector.sendLogout(logout);
+                connector.disconnect();
+                System.out.println("Closed connection to server");
+            }
+            catch (IOException ex) {
+                System.out.println("Failed to disconnect from server");
+            }
+        });
+
         connector.addEventListener(new ConnectorEvent() {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
@@ -178,6 +220,11 @@ public class Client {
 
             @Override
             public void applyUserId(Login login, Connector connector) {
+
+            }
+
+            @Override
+            public void applyLogout(Logout logout, Connector connector) {
 
             }
 
@@ -194,6 +241,20 @@ public class Client {
             @Override
             public void applyChatMessage(ChatMessage chatMessage, Connector connector) {
 
+            }
+
+            @Override
+            public void onDisconnect(Connector connector) {
+
+            }
+
+            @Override
+            public void applyCursorMove(UserEdit userEdit) {
+                if (userId == userEdit.getUserId()) {
+                    return;
+                }
+
+                receiving.applyHighlightToDocument(project, userEdit);
             }
         });
 

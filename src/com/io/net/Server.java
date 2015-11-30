@@ -54,6 +54,7 @@ public class Server implements Runnable {
         userListWindow = new UserListWindow(project);
         userListWindow.addUser(new UserInfo(userId, username));
 
+
         //Broadcast chat messages from server user
         userListWindow.onNewChatMessage((message) -> {
             System.out.println("User [" + username + "] says: " + message);
@@ -66,6 +67,20 @@ public class Server implements Runnable {
             //Sent to all clients
             for (ServerConnection connection : connections) {
                 connection.getConnector().sendChatMessage(chatMessage);
+            }
+        });
+
+        IOProject.getInstance(project).addProjectClosedListener(() -> {
+            try {
+                Logout logout = new Logout(userId);
+                for (ServerConnection connection : connections) {
+                    connection.getConnector().sendLogout(logout);
+                    connection.getConnector().disconnect();
+                    System.out.println("Closed connection to client");
+                }
+            }
+            catch (IOException ex) {
+                System.out.println("Failed to disconnect from clients");
             }
         });
 
@@ -103,8 +118,38 @@ public class Server implements Runnable {
             }
 
             @Override
+            public void applyLogout(Logout logout, Connector connector) {
+
+                ServerConnection serverConnection = findServerConnection(connector);
+                int userId = serverConnection.getUserId();
+                String username = serverConnection.getUsername();
+
+                //Remove all connection objects belonging to the user
+                connections.remove(serverConnection);
+                connectionLookup.remove(connector);
+                userListWindow.removeUserById(userId);
+
+                System.out.println("[" + username + "](" + userId + ") disconnected");
+
+                //Broadcast logout to other clients
+                for (ServerConnection connection : connections) {
+                    connection.getConnector().sendLogout(logout);
+                }
+            }
+
+
+            @Override
             public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
                 //Should never get one
+            }
+
+            @Override
+            public void applyCursorMove(UserEdit userEdit) {
+                if (userId == userEdit.getUserId()) {
+                    return;
+                }
+
+                receiving.applyHighlightToDocument(project, userEdit);
             }
 
             @Override
@@ -146,7 +191,16 @@ public class Server implements Runnable {
                         conn.getConnector().sendChatMessage(chatMessage);
                     }
                 }
+            }
 
+            @Override
+            public void onDisconnect(Connector connector) {
+
+                ServerConnection serverConnection = findServerConnection(connector);
+                int userId = serverConnection.getUserId();
+                String username = serverConnection.getUsername();
+
+                System.out.println("[" + username + "](" + userId + ") has disconnected from server");
             }
         });
 

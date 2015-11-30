@@ -41,4 +41,16 @@ public class UserListWindow extends JPanel {
         });
     }
 
+    public void removeUserById(int userId) {
+        for (int i = 0; i < users.size(); i++) {
+            final UserInfo userInfo = users.getElementAt(i);
+            if (userInfo.getUserId() == userId) {
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    users.removeElement(userInfo);
+                });
+                return;
+            }
+        }
+    }
+
 }

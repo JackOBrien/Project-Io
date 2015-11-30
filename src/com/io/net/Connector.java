@@ -127,8 +127,13 @@ public class Connector implements Runnable {
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             objectOutputStream.writeObject(object);
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException ex) {
+            if (socket.isClosed()) {
+                return;
+            }
+            else {
+                ex.printStackTrace();
+            }
         }
     }
 

@@ -39,6 +39,10 @@ public class StartListening {
         @Override
         public void beforeDocumentChange(DocumentEvent event) {
 
+            if (project.isDisposed()) {
+                return;
+            }
+
             if (!isListening) {
                 System.out.println("Ignoring change.");
                 return;
@@ -83,6 +87,10 @@ public class StartListening {
     private CaretListener caretListener = new CaretListener() {
         @Override
         public void caretPositionChanged(CaretEvent event) {
+
+            if (project.isDisposed()) {
+                return;
+            }
 
             VirtualFile file = FileDocumentManager.getInstance().getFile(event.getEditor().getDocument());
 

@@ -11,6 +11,8 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.io.domain.PacketType.*;
+
 public class Connector implements Runnable {
 
     private Socket socket;
@@ -83,12 +85,23 @@ public class Connector implements Runnable {
                     }
                 }
 
+                /* Looks for packets signifying a connection update */
                 else if (packet.getPacketType() == PacketType.CONNECTION_UPDATE) {
 
                     ConnectionUpdate connectionUpdate = (ConnectionUpdate) packet;
 
                     for (ConnectorEvent connectorEvent : listeners) {
                         connectorEvent.applyConnectionUpdate(connectionUpdate);
+                    }
+                }
+
+                /* Looks for packets signifying a cursor was moved */
+                else if (packet.getPacketType() == CURSOR_MOVE) {
+
+                    UserEdit userEdit = (UserEdit) packet;
+
+                    for (ConnectorEvent connectorEvent : listeners) {
+                        connectorEvent.applyCursorMove(userEdit);
                     }
                 }
             }
@@ -113,7 +126,6 @@ public class Connector implements Runnable {
         try {
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             objectOutputStream.writeObject(object);
-            System.out.println("Sent object: " + object.getClass());
 
         } catch (Exception e) {
             e.printStackTrace();

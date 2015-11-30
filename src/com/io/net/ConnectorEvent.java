@@ -12,4 +12,6 @@ public interface ConnectorEvent {
     void applyConnectionUpdate(ConnectionUpdate connectionUpdate);
 
     void onDisconnect(Connector connector);
+
+    void applyCursorMove(UserEdit userEdit);
 }

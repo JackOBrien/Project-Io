@@ -114,6 +114,15 @@ public class Server implements Runnable {
             }
 
             @Override
+            public void applyCursorMove(UserEdit userEdit) {
+                if (userId == userEdit.getUserId()) {
+                    return;
+                }
+
+                receiving.applyHighlightToDocument(project, userEdit);
+            }
+
+            @Override
             public void applyNewFiles(FileTransfer fileTransferRequest){
                 try {
                     String dir = project.getBasePath();

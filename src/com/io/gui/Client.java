@@ -132,6 +132,11 @@ public class Client {
             public void onDisconnect(Connector connector) {
                 System.out.println("Client has disconnected");
             }
+
+            @Override
+            public void applyCursorMove(UserEdit userEdit) {
+
+            }
         });
 
         (new Thread(connector)).start();
@@ -199,6 +204,14 @@ public class Client {
 
             }
 
+            @Override
+            public void applyCursorMove(UserEdit userEdit) {
+                if (userId == userEdit.getUserId()) {
+                    return;
+                }
+
+                receiving.applyHighlightToDocument(project, userEdit);
+            }
         });
 
     }

@@ -1,10 +1,7 @@
 package com.io.net;
 
 import com.intellij.openapi.project.Project;
-import com.io.domain.FileTransfer;
-import com.io.domain.ConnectionUpdate;
-import com.io.domain.Login;
-import com.io.domain.UserEdit;
+import com.io.domain.*;
 import com.io.gui.*;
 
 import javax.swing.*;
@@ -91,6 +88,27 @@ public class Server implements Runnable {
             }
 
             @Override
+            public void applyLogout(Logout logout, Connector connector) {
+
+                ServerConnection serverConnection = findServerConnection(connector);
+                int userId = serverConnection.getUserId();
+                String username = serverConnection.getUsername();
+
+                //Remove all connection objects belonging to the user
+                connections.remove(serverConnection);
+                connectionLookup.remove(connector);
+                userListWindow.removeUserById(userId);
+
+                System.out.println("[" + username + "](" + userId + ") disconnected");
+
+                //Broadcast logout to other clients
+                for (ServerConnection connection : connections) {
+                    connection.getConnector().sendLogout(logout);
+                }
+            }
+
+
+            @Override
             public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
                 //Should never get one
             }
@@ -125,6 +143,16 @@ public class Server implements Runnable {
                     e.getMessage();
                     e.printStackTrace();
                 }
+            }
+
+            @Override
+            public void onDisconnect(Connector connector) {
+
+                ServerConnection serverConnection = findServerConnection(connector);
+                int userId = serverConnection.getUserId();
+                String username = serverConnection.getUsername();
+
+                System.out.println("[" + username + "](" + userId + ") has disconnected from server");
             }
         });
 

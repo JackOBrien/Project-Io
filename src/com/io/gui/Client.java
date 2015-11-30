@@ -5,10 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.InvalidDataException;
-import com.io.domain.FileTransfer;
-import com.io.domain.ConnectionUpdate;
-import com.io.domain.Login;
-import com.io.domain.UserEdit;
+import com.io.domain.*;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
 import com.io.net.UnZip;
@@ -59,6 +56,11 @@ public class Client {
                 userListWindow.addUser(new UserInfo(userId, username));
                 System.out.println("User id is now " + userId);
                 requestFiles();
+            }
+
+            @Override
+            public void applyLogout(Logout logout, Connector connector) {
+                userListWindow.removeUserById(logout.getUserId());
             }
 
             @Override
@@ -127,6 +129,11 @@ public class Client {
             }
 
             @Override
+            public void onDisconnect(Connector connector) {
+                System.out.println("Client has disconnected");
+            }
+
+            @Override
             public void applyCursorMove(UserEdit userEdit) {
 
             }
@@ -153,6 +160,18 @@ public class Client {
             }
         });
 
+        IOProject.getInstance(project).addProjectClosedListener(() -> {
+            try {
+                Logout logout = new Logout(userId);
+                connector.sendLogout(logout);
+                connector.disconnect();
+                System.out.println("Closed connection to server");
+            }
+            catch (IOException ex) {
+                System.out.println("Failed to disconnect from server");
+            }
+        });
+
         connector.addEventListener(new ConnectorEvent() {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
@@ -166,12 +185,22 @@ public class Client {
             }
 
             @Override
+            public void applyLogout(Logout logout, Connector connector) {
+
+            }
+
+            @Override
             public void applyNewFiles(FileTransfer fileTransfer) {
 
             }
 
             @Override
             public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
+
+            }
+
+            @Override
+            public void onDisconnect(Connector connector) {
 
             }
 

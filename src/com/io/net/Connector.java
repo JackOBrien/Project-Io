@@ -46,7 +46,7 @@ public class Connector implements Runnable {
                 Packet packet = (Packet) inputStream.readObject();
 
                 /* Looks for packets containing a change to the documents contents */
-                if (packet.getPacketType() == DOCUMENT_EDIT) {
+                if (packet.getPacketType() == PacketType.DOCUMENT_EDIT) {
 
                     UserEdit userEdit = (UserEdit) packet;
 
@@ -56,7 +56,7 @@ public class Connector implements Runnable {
                 }
 
                 /* Looks for packets signifying a new Client is logging on */
-                else if (packet.getPacketType() == LOGIN) {
+                else if (packet.getPacketType() == PacketType.LOGIN) {
 
                     Login login = (Login) packet;
 
@@ -65,8 +65,18 @@ public class Connector implements Runnable {
                     }
                 }
 
+                else if (packet.getPacketType() == PacketType.LOGOUT) {
+
+                    Logout logout = (Logout) packet;
+
+                    for (ConnectorEvent connectorEvent : listeners) {
+                        connectorEvent.applyLogout(logout, this);
+                    }
+
+                }
+
                 /* Looks for packets signifying a new file to transfer */
-                else if(packet.getPacketType() == FILE_TRANSFER) {
+                else if(packet.getPacketType() == PacketType.FILE_TRANSFER) {
 
                     FileTransfer fileTransfer = (FileTransfer) packet;
 
@@ -96,7 +106,14 @@ public class Connector implements Runnable {
                 }
             }
             catch (IOException ex) {
+                if (socket.isClosed()) {
 
+                    for (ConnectorEvent connectorEvent : listeners) {
+                        connectorEvent.onDisconnect(this);
+                    }
+
+                    return;
+                }
             }
             catch (ClassNotFoundException ex) {
 
@@ -129,6 +146,14 @@ public class Connector implements Runnable {
 
     public void sendLogin(Login login) {
         sendObject(login);
+    }
+
+    public void sendLogout(Logout logout) {
+        sendObject(logout);
+    }
+
+    public void disconnect() throws IOException {
+        socket.close();
     }
 
 }

@@ -6,5 +6,6 @@ public enum PacketType {
     LOGIN,
     LOGOUT,
     FILE_TRANSFER,
-    CONNECTION_UPDATE
+    CONNECTION_UPDATE,
+    CHAT_MESSAGE
 }

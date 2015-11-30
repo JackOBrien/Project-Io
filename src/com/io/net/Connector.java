@@ -95,6 +95,16 @@ public class Connector implements Runnable {
                     }
                 }
 
+                else if (packet.getPacketType() == PacketType.CHAT_MESSAGE) {
+
+                    ChatMessage chatMessage = (ChatMessage) packet;
+
+                    for (ConnectorEvent connectorEvent : listeners) {
+                        connectorEvent.applyChatMessage(chatMessage, this);
+                    }
+
+                }
+
                 /* Looks for packets signifying a cursor was moved */
                 else if (packet.getPacketType() == CURSOR_MOVE) {
 
@@ -151,6 +161,11 @@ public class Connector implements Runnable {
 
     public void sendLogin(Login login) {
         sendObject(login);
+    }
+
+
+    public void sendChatMessage(ChatMessage chatMessage) {
+        sendObject(chatMessage);
     }
 
     public void sendLogout(Logout logout) {

@@ -20,4 +20,8 @@ public class UserInfo implements Serializable {
         return this.userId;
     }
 
+    public String getUsername() {
+        return this.username;
+    }
+
 }

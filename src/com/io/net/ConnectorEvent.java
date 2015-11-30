@@ -11,6 +11,9 @@ public interface ConnectorEvent {
     void applyNewFiles(FileTransfer fileTransfer);
     void applyConnectionUpdate(ConnectionUpdate connectionUpdate);
 
+
+    void applyChatMessage(ChatMessage chatMessage, Connector connector);
+
     void onDisconnect(Connector connector);
 
     void applyCursorMove(UserEdit userEdit);

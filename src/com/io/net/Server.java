@@ -54,6 +54,20 @@ public class Server implements Runnable {
         userListWindow = new UserListWindow(project);
         userListWindow.addUser(new UserInfo(userId, username));
 
+        IOProject.getInstance(project).addProjectClosedListener(() -> {
+            try {
+                Logout logout = new Logout(userId);
+                for (ServerConnection connection : connections) {
+                    connection.getConnector().sendLogout(logout);
+                    connection.getConnector().disconnect();
+                    System.out.println("Closed connection to client");
+                }
+            }
+            catch (IOException ex) {
+                System.out.println("Failed to disconnect from clients");
+            }
+        });
+
         this.addListener(new ConnectorEvent() {
             @Override
             public void applyUserEdit(UserEdit userEdit) {

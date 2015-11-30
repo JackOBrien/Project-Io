@@ -26,6 +26,10 @@ public class StartReceiving {
 
     public void applyUserEditToDocument(Project project, UserEdit userEdit) {
 
+        if (project.isDisposed()) {
+            return;
+        }
+
         System.out.println(userEdit.getFilePath());
 
         String filePath = Paths.get(project.getBasePath(), userEdit.getFilePath()).toString();
@@ -85,6 +89,10 @@ public class StartReceiving {
     }
 
     public void applyHighlightToDocument(Project project, UserEdit userEdit) {
+
+        if (project.isDisposed()) {
+            return;
+        }
 
         WriteCommandAction.runWriteCommandAction(project, () -> {
             String filePath = Paths.get(project.getBasePath(), userEdit.getFilePath()).toString();

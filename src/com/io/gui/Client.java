@@ -8,6 +8,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.io.domain.*;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
+import com.io.net.Server;
 import com.io.net.UnZip;
 import org.jdom.JDOMException;
 
@@ -61,6 +62,21 @@ public class Client {
             @Override
             public void applyLogout(Logout logout, Connector connector) {
                 userListWindow.removeUserById(logout.getUserId());
+
+                //If server logged out, we are done
+                if (logout.getUserId() == Server.INITIAL_USER_ID) {
+
+                    try {
+                        connector.disconnect();
+                    }
+                    catch (IOException ex) {
+                        System.out.println("Failed to disconnect from server");
+                    }
+
+                    ApplicationManager.getApplication().invokeLater(() -> {
+                        ProjectManagerEx.getInstance().closeProject(project);
+                    });
+                }
             }
 
             @Override

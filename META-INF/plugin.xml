@@ -34,6 +34,9 @@
 
     <project-components>
         <!-- Add your project components here -->
+        <component>
+            <implementation-class>com.io.gui.IOProject</implementation-class>
+        </component>
     </project-components>
 
     <actions>

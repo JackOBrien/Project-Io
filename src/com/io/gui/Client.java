@@ -1,41 +1,40 @@
 package com.io.gui;
 
 
-import com.intellij.openapi.editor.Editor;
-import com.io.domain.ConnectionUpdate;
-import com.io.domain.Login;
-import com.io.domain.UserEdit;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.util.InvalidDataException;
+import com.io.domain.*;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
+import com.io.net.Server;
+import com.io.net.UnZip;
+import org.jdom.JDOMException;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 
 public class Client {
 
     public static final int INITIAL_USER_ID = -1;
-
     public static final String INITIAL_USER_NAME = "user";
 
     public StartListening listening;  //TODO: Make private
-
     public StartReceiving receiving;
-
-    private String username;
-
-    private int userId;
-
     private Connector connector;
 
+    private int userId;
+    private String username;
+
     private UserListWindow userListWindow;
+    private Project project;
 
-    public Client (final Editor editor) {
+    public Client (final Project currentProject) {
 
-        listening = new StartListening(editor);
-        receiving = new StartReceiving(editor, listening);
-
-        userListWindow = new UserListWindow(editor.getProject());
+        userListWindow = new UserListWindow();
 
         try {
             connector = new Connector();
@@ -44,19 +43,22 @@ public class Client {
             return;
         }
 
-        listening.addEventListener(new EditorEvent() {
-            @Override
-            public void sendChange(UserEdit userEdit) {
-                userEdit.setUserId(userId);
-                connector.sendUserEdit(userEdit);
-            }
+        //Send chat messages to server
+        userListWindow.onNewChatMessage((message) -> {
+            System.out.println("User [" + username + "] says: " + message);
+
+            ChatMessage chatMessage = new ChatMessage(userId, message);
+
+            String output = username + ": " + message;
+            userListWindow.appendChatMessage(output);
+
+            connector.sendChatMessage(chatMessage);
         });
 
         connector.addEventListener(new ConnectorEvent() {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
-                userEdit.setUserId(userId);
-                receiving.applyUserEditToDocument(editor, userEdit);
+
             }
 
             @Override
@@ -64,7 +66,82 @@ public class Client {
                 userId = login.getUserId();
                 username = login.getUsername();
                 userListWindow.addUser(new UserInfo(userId, username));
-                System.out.println(editor.getProject().getName() + ": User id is now " + userId);
+                System.out.println("User id is now " + userId);
+                requestFiles();
+            }
+
+            @Override
+            public void applyLogout(Logout logout, Connector connector) {
+                userListWindow.removeUserById(logout.getUserId());
+
+                //If server logged out, we are done
+                if (logout.getUserId() == Server.INITIAL_USER_ID) {
+
+                    try {
+                        connector.disconnect();
+                    }
+                    catch (IOException ex) {
+                        System.out.println("Failed to disconnect from server");
+                    }
+
+                    ApplicationManager.getApplication().invokeLater(() -> {
+                        ProjectManagerEx.getInstance().closeProject(project);
+                    });
+                }
+            }
+
+            @Override
+            public void applyNewFiles(FileTransfer fileTransfer){
+                try {
+
+                    //Get parent directory
+                    String dir = Paths.get(currentProject.getBasePath()).getParent().toString();
+
+                    //For testing on one computer
+                    String parent = Paths.get(dir).getParent().toString();
+                    dir = Paths.get(parent, "IdeaProjectIO", fileTransfer.getProjectName()).toString();
+
+                    System.out.println("Saving project to: " + dir);
+
+                    try {
+                        UnZip.unZip(fileTransfer.getContent(), dir);
+                    }
+                    catch (IOException ex) {
+                        System.out.println("Failed to unzip project.");
+                        return;
+                    }
+
+                    final String dircopy = dir;
+                    ApplicationManager.getApplication().invokeLater(() -> {
+                        ProjectManagerEx pm = ProjectManagerEx.getInstanceEx();
+                        Project newProject = null;
+                        System.out.println("Loading project: " + dircopy);
+
+                        try {
+                            newProject = pm.loadProject(dircopy);
+                        }
+                        catch (IOException ex) {
+                            System.out.println("Failed to open project");
+                        }
+                        catch (JDOMException ex) {
+                            ex.printStackTrace();
+                        }
+                        catch (InvalidDataException ex) {
+                            System.out.println("Invalid project!");
+                        }
+
+                        if (newProject != null) {
+                            System.out.println("Opening project.");
+                            pm.openProject(newProject);
+                            loadProject(newProject);
+                        }
+                    });
+
+                    //TODO Still needs to update the current project to the new project from the new dir
+                }catch (Exception e){
+                    e.getMessage();
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -77,6 +154,28 @@ public class Client {
                     userListWindow.addUser(user);
                 }
             }
+
+            @Override
+            public void applyChatMessage(ChatMessage chatMessage, Connector connector) {
+
+                //Build message output
+                String username = userListWindow.getUsernameById(chatMessage.getUserId());
+                String output = username + ": " + chatMessage.getMessage();
+
+                //Print chat message to screen
+                userListWindow.appendChatMessage(output);
+
+            }
+
+            @Override
+            public void onDisconnect(Connector connector) {
+                System.out.println("Client has disconnected");
+            }
+
+            @Override
+            public void applyCursorMove(UserEdit userEdit) {
+
+            }
         });
 
         (new Thread(connector)).start();
@@ -84,10 +183,93 @@ public class Client {
         login();
     }
 
+    private void loadProject(Project project) {
+        this.project = project;
+
+        listening = new StartListening(project);
+        receiving = new StartReceiving(project, listening);
+
+        userListWindow.attachToProject(project);
+
+        listening.addEventListener(new EditorEvent() {
+            @Override
+            public void sendChange(UserEdit userEdit) {
+                userEdit.setUserId(userId);
+                connector.sendUserEdit(userEdit);
+            }
+        });
+
+        IOProject.getInstance(project).addProjectClosedListener(() -> {
+            try {
+                Logout logout = new Logout(userId);
+                connector.sendLogout(logout);
+                connector.disconnect();
+                System.out.println("Closed connection to server");
+            }
+            catch (IOException ex) {
+                System.out.println("Failed to disconnect from server");
+            }
+        });
+
+        connector.addEventListener(new ConnectorEvent() {
+            @Override
+            public void applyUserEdit(UserEdit userEdit) {
+                userEdit.setUserId(userId);
+                receiving.applyUserEditToDocument(project, userEdit);
+            }
+
+            @Override
+            public void applyUserId(Login login, Connector connector) {
+
+            }
+
+            @Override
+            public void applyLogout(Logout logout, Connector connector) {
+
+            }
+
+            @Override
+            public void applyNewFiles(FileTransfer fileTransfer) {
+
+            }
+
+            @Override
+            public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
+
+            }
+
+            @Override
+            public void applyChatMessage(ChatMessage chatMessage, Connector connector) {
+
+            }
+
+            @Override
+            public void onDisconnect(Connector connector) {
+
+            }
+
+            @Override
+            public void applyCursorMove(UserEdit userEdit) {
+                if (userId == userEdit.getUserId()) {
+                    return;
+                }
+
+                receiving.applyHighlightToDocument(project, userEdit);
+            }
+        });
+
+    }
+
     private void login() {
         username = JOptionPane.showInputDialog("Please enter a username");
 
         Login login = new Login(INITIAL_USER_ID, username);
         connector.sendObject(login);
+    }
+
+    private void requestFiles(){
+        FileTransfer fileTransferRequest = new FileTransfer(this.userId);
+
+        connector.sendFileTransferRequest(fileTransferRequest);
     }
 }

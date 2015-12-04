@@ -1,10 +1,7 @@
 package com.io.net;
 
 import com.intellij.openapi.project.Project;
-import com.io.domain.FileTransfer;
-import com.io.domain.ConnectionUpdate;
-import com.io.domain.Login;
-import com.io.domain.UserEdit;
+import com.io.domain.*;
 import com.io.gui.*;
 
 import javax.swing.*;
@@ -57,6 +54,36 @@ public class Server implements Runnable {
         userListWindow = new UserListWindow(project);
         userListWindow.addUser(new UserInfo(userId, username));
 
+
+        //Broadcast chat messages from server user
+        userListWindow.onNewChatMessage((message) -> {
+            System.out.println("User [" + username + "] says: " + message);
+
+            ChatMessage chatMessage = new ChatMessage(userId, message);
+
+            String output = username + ": " + message;
+            userListWindow.appendChatMessage(output);
+
+            //Sent to all clients
+            for (ServerConnection connection : connections) {
+                connection.getConnector().sendChatMessage(chatMessage);
+            }
+        });
+
+        IOProject.getInstance(project).addProjectClosedListener(() -> {
+            try {
+                Logout logout = new Logout(userId);
+                for (ServerConnection connection : connections) {
+                    connection.getConnector().sendLogout(logout);
+                    connection.getConnector().disconnect();
+                    System.out.println("Closed connection to client");
+                }
+            }
+            catch (IOException ex) {
+                System.out.println("Failed to disconnect from clients");
+            }
+        });
+
         this.addListener(new ConnectorEvent() {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
@@ -64,9 +91,9 @@ public class Server implements Runnable {
 
                 String editorsName = "<Not Found>";
 
-                for (ServerConnection s : connectionLookup.values()) {
-                    if (s.getUserId() == userEdit.getUserId()) {
-                        editorsName = s.getUsername();
+                for (ServerConnection connection : connections) {
+                    if (connection.getUserId() == userEdit.getUserId()) {
+                        editorsName = connection.getUsername();
                     }
                 }
 
@@ -91,8 +118,38 @@ public class Server implements Runnable {
             }
 
             @Override
+            public void applyLogout(Logout logout, Connector connector) {
+
+                ServerConnection serverConnection = findServerConnection(connector);
+                int userId = serverConnection.getUserId();
+                String username = serverConnection.getUsername();
+
+                //Remove all connection objects belonging to the user
+                connections.remove(serverConnection);
+                connectionLookup.remove(connector);
+                userListWindow.removeUserById(userId);
+
+                System.out.println("[" + username + "](" + userId + ") disconnected");
+
+                //Broadcast logout to other clients
+                for (ServerConnection connection : connections) {
+                    connection.getConnector().sendLogout(logout);
+                }
+            }
+
+
+            @Override
             public void applyConnectionUpdate(ConnectionUpdate connectionUpdate) {
                 //Should never get one
+            }
+
+            @Override
+            public void applyCursorMove(UserEdit userEdit) {
+                if (userId == userEdit.getUserId()) {
+                    return;
+                }
+
+                receiving.applyHighlightToDocument(project, userEdit);
             }
 
             @Override
@@ -116,6 +173,34 @@ public class Server implements Runnable {
                     e.getMessage();
                     e.printStackTrace();
                 }
+            }
+
+            @Override
+            public void applyChatMessage(ChatMessage chatMessage, Connector connector) {
+
+                //Build message output
+                ServerConnection connection = findServerConnection(connector);
+                String output = connection.getUsername() + ": " + chatMessage.getMessage();
+
+                //Print chat message to screen
+                userListWindow.appendChatMessage(output);
+
+                //Broadcast message to all other clients
+                for (ServerConnection conn : connections) {
+                    if (conn.getUserId() != chatMessage.getUserId()) {
+                        conn.getConnector().sendChatMessage(chatMessage);
+                    }
+                }
+            }
+
+            @Override
+            public void onDisconnect(Connector connector) {
+
+                ServerConnection serverConnection = findServerConnection(connector);
+                int userId = serverConnection.getUserId();
+                String username = serverConnection.getUsername();
+
+                System.out.println("[" + username + "](" + userId + ") has disconnected from server");
             }
         });
 

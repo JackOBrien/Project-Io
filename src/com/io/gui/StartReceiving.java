@@ -70,14 +70,31 @@ public class StartReceiving {
                     String newText = (String)output[0];
                     document.setText(newText);
 
-                    int[] insertPositions = (int[]) output[2];
-                    int insertPos = insertPositions[0];
+                    //Try to keep cursor where it was
+                    try {
+                        //Get the list of positions where the patch was applied
+                        int[] patchPositions = (int[]) output[2];
+                        int patchPosition = -1;
 
-                    if (position > insertPos) {
-                        position += newText.length() - currentText.length();
+                        //Get the first non-negative position
+                        for (int i = 0; i < patchPositions.length; i++) {
+                            if (patchPositions[i] >= 0) {
+                                patchPosition = patchPositions[i];
+                                break;
+                            }
+                        }
+
+                        //If we found a patch position and the cursor is after that position
+                        //move the cursor position to whatever length the patch difference is
+                        if (patchPosition >= 0 && position > patchPosition) {
+                            position += newText.length() - currentText.length();
+                        }
+
+                        editor.getCaretModel().moveToOffset(position);
                     }
-
-                    editor.getCaretModel().moveToOffset(position);
+                    catch (Exception ex) {
+                        System.out.println("An error occurred when moving cursor after applying a patch");
+                    }
                 }
                 catch(NullPointerException ex) {
                     System.out.println("Failed to insert into document.");

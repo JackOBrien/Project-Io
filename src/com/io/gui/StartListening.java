@@ -68,25 +68,19 @@ public class StartListening {
 
             if (!event.getNewFragment().toString().contains(dummyIdentifier)) {
                 if (!event.isWholeTextReplaced()) {
-                    int lengthDifference = event.getNewLength() - event.getOldLength();
 
                     //Get path relative to project root (e.g. src/Sample.java)
                     Path basePath = Paths.get(project.getBasePath());
                     Path absoluteFilePath = Paths.get(file.getPath());
                     String relativeFilePath = basePath.relativize(absoluteFilePath).toString();
 
-                    IOPatcher patcher = new IOPatcher();
-                    LinkedList<Patch> patches = null;
-
                     String documentText = event.getDocument().getText();
                     String oldFragment = event.getOldFragment().toString();
                     String newFragment = event.getNewFragment().toString();
+                    int offset = event.getOffset();
 
-                    System.out.println("OFFSET: " + event.getOffset());
-                    System.out.println("OLD FRAG: [" + oldFragment + "]");
-                    System.out.println("NEW FRAG: [" + newFragment + "]");
-
-                    patches = patcher.makePatchAsList(documentText, oldFragment, newFragment, event.getOffset());
+                    IOPatcher patcher = new IOPatcher();
+                    LinkedList<Patch> patches = patcher.makePatchAsList(documentText, oldFragment, newFragment, offset);
 
                     UserEdit edit = new UserEdit(0, relativeFilePath, patches);
 

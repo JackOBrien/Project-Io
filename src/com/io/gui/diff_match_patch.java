@@ -1937,6 +1937,7 @@ public class diff_match_patch {
     // has an effective expected position of 22.
     int delta = 0;
     boolean[] results = new boolean[patches.size()];
+      int[] positions = new int[patches.size()];
     for (Patch aPatch : patches) {
       int expected_loc = aPatch.start2 + delta;
       String text1 = diff_text1(aPatch.diffs);
@@ -1967,6 +1968,7 @@ public class diff_match_patch {
       } else {
         // Found a match.  :)
         results[x] = true;
+          positions[x] = start_loc;
         delta = start_loc - expected_loc;
         String text2;
         if (end_loc == -1) {
@@ -2018,7 +2020,7 @@ public class diff_match_patch {
     // Strip the padding off.
     text = text.substring(nullPadding.length(), text.length()
         - nullPadding.length());
-    return new Object[]{text, results};
+    return new Object[]{text, results, positions};
   }
 
   /**

@@ -4,6 +4,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -58,6 +59,9 @@ public class StartReceiving {
                     return;
                 }
 
+                Editor editor = EditorFactory.getInstance().getEditors(document)[0];
+                int position = editor.getCaretModel().getOffset();
+
                 try {
                     String currentText = document.getText();
                     IOPatcher patcher = new IOPatcher();
@@ -65,6 +69,15 @@ public class StartReceiving {
                     Object[] output = patcher.patch_apply(userEdit.getPatches(), currentText);
                     String newText = (String)output[0];
                     document.setText(newText);
+
+                    int[] insertPositions = (int[]) output[2];
+                    int insertPos = insertPositions[0];
+
+                    if (position > insertPos) {
+                        position += newText.length() - currentText.length();
+                    }
+
+                    editor.getCaretModel().moveToOffset(position);
                 }
                 catch(NullPointerException ex) {
                     System.out.println("Failed to insert into document.");

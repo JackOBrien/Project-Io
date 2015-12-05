@@ -92,6 +92,12 @@ public class StartReceiving {
             }
 
             Document document = FileDocumentManager.getInstance().getDocument(file);
+
+            if (document == null) {
+                System.out.println("Could not find document to highlight");
+                return;
+            }
+
             Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
 
             final TextAttributes attributes = new TextAttributes();
@@ -100,11 +106,16 @@ public class StartReceiving {
             attributes.setEffectColor(color);
             attributes.setEffectType(EffectType.SEARCH_MATCH);
             attributes.setBackgroundColor(color);
-            attributes.setForegroundColor(Color.WHITE);
+            attributes.setForegroundColor(JBColor.WHITE);
 
             int start = cursorMovement.getPosition();
+
             int end = start + 1;
             int textLength = document.getTextLength();
+
+            if (textLength == 0) {
+                return;
+            }
 
             if (end > textLength) {
                 end = textLength;

@@ -94,6 +94,11 @@ public class StartListening {
 
             VirtualFile file = FileDocumentManager.getInstance().getFile(event.getEditor().getDocument());
 
+            //Make sure file exists
+            if (file == null) {
+                return;
+            }
+
             int offset = event.getEditor().logicalPositionToOffset(event.getNewPosition());
 
             //Get path relative to project root (e.g. src/Sample.java)

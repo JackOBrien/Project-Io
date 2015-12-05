@@ -29,16 +29,17 @@ public class IOPatcher extends diff_match_patch {
         Patch patch = new Patch();
 
         int lastIndex = originalText.length();
-        int start = Math.max(removedFragmentPosition - (this.Patch_Margin * 2), 0);
-        int end = Math.min(lastIndex, removedFragmentPosition + (this.Patch_Margin * 2));
+        int start = Math.max(removedFragmentPosition - this.Patch_Margin, 0);
+        int end = Math.min(lastIndex, removedFragmentPosition + this.Patch_Margin);
 
         patch.start1 = patch.start2 = start;
 
-        patch.length2 = end - start;
-        patch.length1 = patch.length2 - removedFragment.length();
+        patch.length1 = end - start;
+        patch.length2 = patch.length1 - removedFragment.length();
 
         patch.diffs.add(new Diff(Operation.EQUAL, originalText.substring(start, removedFragmentPosition)));
         patch.diffs.add(new Diff(Operation.DELETE, removedFragment));
+        patch.diffs.add(new Diff(Operation.EQUAL, originalText.substring(removedFragmentPosition + removedFragment.length())));
 
         return patch;
     }

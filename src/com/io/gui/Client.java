@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.wm.WindowManager;
 import com.io.domain.*;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
@@ -32,7 +33,7 @@ public class Client {
     private UserListWindow userListWindow;
     private Project project;
 
-    public Client (final Project currentProject) {
+    public Client () {
 
         userListWindow = new UserListWindow();
 
@@ -94,12 +95,20 @@ public class Client {
             public void applyNewFiles(FileTransfer fileTransfer){
                 try {
 
-                    //Get parent directory
-                    String dir = Paths.get(currentProject.getBasePath()).getParent().toString();
+                    String dir = "";
 
-                    //For testing on one computer
-                    String parent = Paths.get(dir).getParent().toString();
-                    dir = Paths.get(parent, "IdeaProjectIO", fileTransfer.getProjectName()).toString();
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                    fileChooser.setDialogTitle("Select a location to save the project folder in");
+                    int ret = fileChooser.showDialog(WindowManager.getInstance().findVisibleFrame().getGlassPane(), "Choose Folder");
+                    if (ret == JFileChooser.APPROVE_OPTION) {
+                        String chosenDirectory = fileChooser.getSelectedFile().getAbsolutePath();
+                        dir = Paths.get(chosenDirectory, fileTransfer.getProjectName()).toString();
+                    }
+                    else {
+                        logout();
+                        return;
+                    }
 
                     System.out.println("Saving project to: " + dir);
 
@@ -108,6 +117,7 @@ public class Client {
                     }
                     catch (IOException ex) {
                         System.out.println("Failed to unzip project.");
+                        logout();
                         return;
                     }
 
@@ -137,8 +147,7 @@ public class Client {
                         }
                     });
 
-                    //TODO Still needs to update the current project to the new project from the new dir
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.getMessage();
                     e.printStackTrace();
                 }
@@ -200,15 +209,7 @@ public class Client {
         });
 
         IOProject.getInstance(project).addProjectClosedListener(() -> {
-            try {
-                Logout logout = new Logout(userId);
-                connector.sendLogout(logout);
-                connector.disconnect();
-                System.out.println("Closed connection to server");
-            }
-            catch (IOException ex) {
-                System.out.println("Failed to disconnect from server");
-            }
+            logout();
         });
 
         connector.addEventListener(new ConnectorEvent() {
@@ -265,6 +266,18 @@ public class Client {
 
         Login login = new Login(INITIAL_USER_ID, username);
         connector.sendObject(login);
+    }
+
+    private void logout() {
+        try {
+            Logout logout = new Logout(userId);
+            connector.sendLogout(logout);
+            connector.disconnect();
+            System.out.println("Closed connection to server");
+        }
+        catch (IOException ex) {
+            System.out.println("Failed to disconnect from server");
+        }
     }
 
     private void requestFiles(){

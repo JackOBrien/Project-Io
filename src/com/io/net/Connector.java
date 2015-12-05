@@ -6,6 +6,7 @@ import com.io.domain.Packet;
 import com.io.domain.UserEdit;
 import com.io.domain.*;
 
+import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -108,10 +109,10 @@ public class Connector implements Runnable {
                 /* Looks for packets signifying a cursor was moved */
                 else if (packet.getPacketType() == CURSOR_MOVE) {
 
-                    UserEdit userEdit = (UserEdit) packet;
+                    CursorMovement cursorMovement = (CursorMovement) packet;
 
                     for (ConnectorEvent connectorEvent : listeners) {
-                        connectorEvent.applyCursorMove(userEdit);
+                        connectorEvent.applyCursorMove(cursorMovement);
                     }
                 }
             }
@@ -149,6 +150,10 @@ public class Connector implements Runnable {
 
     public void sendUserEdit(UserEdit userEdit) {
         sendObject(userEdit);
+    }
+
+    public void sendCursorMovement(CursorMovement cursorMovement) {
+        sendObject(cursorMovement);
     }
 
     public void sendFileTransferRequest(FileTransfer fileTransfer) {

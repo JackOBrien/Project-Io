@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.io.domain.CursorMovement;
 import com.io.domain.UserEdit;
 
 import java.nio.file.Path;
@@ -106,10 +107,10 @@ public class StartListening {
             Path absoluteFilePath = Paths.get(file.getPath());
             String relativeFilePath = basePath.relativize(absoluteFilePath).toString();
 
-            UserEdit edit = new UserEdit(-1, relativeFilePath, offset, 0);
+            CursorMovement cursorMovement = new CursorMovement(-1, relativeFilePath, offset);
 
             for (EditorEvent editorEvent : events) {
-                editorEvent.sendChange(edit);
+                editorEvent.sendCursorMovement(cursorMovement);
             }
         }
 

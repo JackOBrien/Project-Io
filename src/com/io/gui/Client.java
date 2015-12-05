@@ -182,7 +182,7 @@ public class Client {
             }
 
             @Override
-            public void applyCursorMove(UserEdit userEdit) {
+            public void applyCursorMove(CursorMovement cursorMovement) {
 
             }
         });
@@ -205,6 +205,12 @@ public class Client {
             public void sendChange(UserEdit userEdit) {
                 userEdit.setUserId(userId);
                 connector.sendUserEdit(userEdit);
+            }
+
+            @Override
+            public void sendCursorMovement(CursorMovement cursorMovement) {
+                cursorMovement.setUserId(userId);
+                connector.sendCursorMovement(cursorMovement);
             }
         });
 
@@ -250,12 +256,12 @@ public class Client {
             }
 
             @Override
-            public void applyCursorMove(UserEdit userEdit) {
-                if (userId == userEdit.getUserId()) {
+            public void applyCursorMove(CursorMovement cursorMovement) {
+                if (userId == cursorMovement.getUserId()) {
                     return;
                 }
 
-                receiving.applyHighlightToDocument(project, userEdit);
+                receiving.applyHighlightToDocument(project, cursorMovement);
             }
         });
 

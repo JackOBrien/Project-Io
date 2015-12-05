@@ -17,16 +17,6 @@ public class UserEdit extends Packet {
         this.lengthDifference = lengthDifference;
     }
 
-    public UserEdit(int userId, String filePath, int offset, int lengthDifference) {
-
-        super(userId, PacketType.CURSOR_MOVE);
-
-        this.editText = null;
-        this.filePath = filePath;
-        this.offset = offset;
-        this.lengthDifference = lengthDifference;
-    }
-
     public String getEditText() {
         return this.editText;
     }

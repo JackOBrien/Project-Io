@@ -144,12 +144,12 @@ public class Server implements Runnable {
             }
 
             @Override
-            public void applyCursorMove(UserEdit userEdit) {
-                if (userId == userEdit.getUserId()) {
+            public void applyCursorMove(CursorMovement cursorMovement) {
+                if (userId == cursorMovement.getUserId()) {
                     return;
                 }
 
-                receiving.applyHighlightToDocument(project, userEdit);
+                receiving.applyHighlightToDocument(project, cursorMovement);
             }
 
             @Override
@@ -210,6 +210,12 @@ public class Server implements Runnable {
                 userEdit.setUserId(userId);
                 broadcastEdit(userEdit);
             }
+
+            @Override
+            public void sendCursorMovement(CursorMovement cursorMovement) {
+                cursorMovement.setUserId(userId);
+                broadcastCursorMovement(cursorMovement);
+            }
         });
 
         (new Thread(this)).start();
@@ -266,6 +272,14 @@ public class Server implements Runnable {
         for (ServerConnection connection: connections) {
             if (connection.getUserId() != userEdit.getUserId()) {
                 connection.getConnector().sendUserEdit(userEdit);
+            }
+        }
+    }
+
+    public void broadcastCursorMovement(CursorMovement cursorMovement) {
+        for (ServerConnection connection: connections) {
+            if (connection.getUserId() != cursorMovement.getUserId()) {
+                connection.getConnector().sendCursorMovement(cursorMovement);
             }
         }
     }

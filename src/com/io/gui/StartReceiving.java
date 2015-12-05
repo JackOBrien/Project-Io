@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
+import com.io.domain.CursorMovement;
 import com.io.domain.UserEdit;
 
 import java.awt.*;
@@ -88,14 +89,14 @@ public class StartReceiving {
         });
     }
 
-    public void applyHighlightToDocument(Project project, UserEdit userEdit) {
+    public void applyHighlightToDocument(Project project, CursorMovement cursorMovement) {
 
         if (project.isDisposed()) {
             return;
         }
 
         WriteCommandAction.runWriteCommandAction(project, () -> {
-            String filePath = Paths.get(project.getBasePath(), userEdit.getFilePath()).toString();
+            String filePath = Paths.get(project.getBasePath(), cursorMovement.getFilePath()).toString();
 
             VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
 
@@ -115,7 +116,7 @@ public class StartReceiving {
             attributes.setBackgroundColor(color);
             attributes.setForegroundColor(Color.WHITE);
 
-            int start = userEdit.getOffset();
+            int start = cursorMovement.getPosition();
             int end = start + 1;
             int textLength = document.getTextLength();
 

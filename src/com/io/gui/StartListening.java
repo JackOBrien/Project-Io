@@ -12,7 +12,10 @@ import com.io.domain.UserEdit;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+
+import com.io.gui.diff_match_patch.Patch;
 
 /**
  * Class which sets up the document to track changes and send them to the server.
@@ -72,7 +75,15 @@ public class StartListening {
                     Path absoluteFilePath = Paths.get(file.getPath());
                     String relativeFilePath = basePath.relativize(absoluteFilePath).toString();
 
-                    UserEdit edit = new UserEdit(0, event.getNewFragment().toString(), relativeFilePath, event.getOffset(), lengthDifference);
+                    IOPatcher patcher = new IOPatcher();
+                    LinkedList<Patch> patches = null;
+
+                    //Inserting
+                    if (lengthDifference > 0) {
+                        patches = patcher.makeInsertPatchAsList(event.getDocument().getText(), event.getNewFragment().toString(), event.getOffset());
+                    }
+
+                    UserEdit edit = new UserEdit(0, relativeFilePath, patches);
 
                     for (EditorEvent editorEvent : events) {
                         editorEvent.sendChange(edit);

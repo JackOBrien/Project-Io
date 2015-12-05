@@ -43,48 +43,34 @@ public class StartReceiving {
             return;
         }
 
-        // TODO: Make sure userEdit is not my id
-        //...
-
         // TODO: Remove this. -- TESTING ONLY --
         System.out.println("Applying edit from: " + userEdit.getUserId());
 
         //Apply userEdit
         WriteCommandAction.runWriteCommandAction(project, () -> {
-            if (userEdit.getEditText() == null) {
-                //Move cursor
-                //editor.getCaretModel().moveToOffset(userEdit.getOffset());
-            }
-            else {
-                synchronized (this) {
-                    listener.isListening = false;
+            synchronized (this) {
+                listener.isListening = false;
 
+                Document document = FileDocumentManager.getInstance().getDocument(file);
 
-                    Document document = FileDocumentManager.getInstance().getDocument(file);
-
-                    if (document == null) {
-                        System.out.println("Failed to find document.");
-                    }
-                    else {
-                        System.out.println("Found document");
-                    }
-
-                    int diff = userEdit.getLengthDifference();
-                    int offset = userEdit.getOffset();
-
-                    try {
-                        if (diff < 0) {
-                            document.deleteString(offset, offset + (-1 * diff));
-                        } else {
-                            document.insertString(offset, userEdit.getEditText());
-                        }
-                    }
-                    catch(NullPointerException ex) {
-                        System.out.println("Failed to insert into document.");
-                    }
-
-                    listener.isListening = true;
+                if (document == null) {
+                    System.out.println("Failed to find document.");
+                    return;
                 }
+
+                try {
+                    String currentText = document.getText();
+                    IOPatcher patcher = new IOPatcher();
+
+                    Object[] output = patcher.patch_apply(userEdit.getPatches(), currentText);
+                    String newText = (String)output[0];
+                    document.setText(newText);
+                }
+                catch(NullPointerException ex) {
+                    System.out.println("Failed to insert into document.");
+                }
+
+                listener.isListening = true;
             }
         });
     }

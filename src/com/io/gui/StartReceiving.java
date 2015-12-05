@@ -59,8 +59,14 @@ public class StartReceiving {
                     return;
                 }
 
-                Editor editor = EditorFactory.getInstance().getEditors(document)[0];
-                int position = editor.getCaretModel().getOffset();
+                Editor[] editors = EditorFactory.getInstance().getEditors(document);
+                Editor editor = null;
+                int cursorPosition = 0;
+
+                if (editors.length > 0) {
+                    editor = editors[0];
+                    cursorPosition = editor.getCaretModel().getOffset();
+                }
 
                 try {
                     String currentText = document.getText();
@@ -70,8 +76,9 @@ public class StartReceiving {
                     String newText = (String)output[0];
                     document.setText(newText);
 
-                    //Try to keep cursor where it was
-                    try {
+                    //If editor is open, try to keep cursor still
+                    if (editor != null) {
+
                         //Get the list of positions where the patch was applied
                         int[] patchPositions = (int[]) output[2];
                         int patchPosition = -1;
@@ -86,14 +93,16 @@ public class StartReceiving {
 
                         //If we found a patch position and the cursor is after that position
                         //move the cursor position to whatever length the patch difference is
-                        if (patchPosition >= 0 && position > patchPosition) {
-                            position += newText.length() - currentText.length();
+                        if (patchPosition >= 0 && cursorPosition > patchPosition) {
+                            cursorPosition += newText.length() - currentText.length();
                         }
 
-                        editor.getCaretModel().moveToOffset(position);
-                    }
-                    catch (Exception ex) {
-                        System.out.println("An error occurred when moving cursor after applying a patch");
+                        try {
+                            editor.getCaretModel().moveToOffset(cursorPosition);
+                        }
+                        catch (Exception ex) {
+                            System.out.println("An error occurred when moving cursor after applying a patch");
+                        }
                     }
                 }
                 catch(NullPointerException ex) {

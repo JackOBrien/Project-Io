@@ -100,6 +100,11 @@ public class StartListening {
                 return;
             }
 
+            //Make sure file is in the project
+            if (!ProjectFileIndex.SERVICE.getInstance(project).isInSource(file)) {
+                return;
+            }
+
             int offset = event.getEditor().logicalPositionToOffset(event.getNewPosition());
 
             //Get path relative to project root (e.g. src/Sample.java)

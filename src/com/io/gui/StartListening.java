@@ -78,13 +78,15 @@ public class StartListening {
                     IOPatcher patcher = new IOPatcher();
                     LinkedList<Patch> patches = null;
 
-                    //Inserting else deleting
-                    if (lengthDifference > 0) {
-                        patches = patcher.makeInsertPatchAsList(event.getDocument().getText(), event.getNewFragment().toString(), event.getOffset());
-                    }
-                    else {
-                        patches = patcher.makeDeletePatchAsList(event.getDocument().getText(), event.getOldFragment().toString(), event.getOffset());
-                    }
+                    String documentText = event.getDocument().getText();
+                    String oldFragment = event.getOldFragment().toString();
+                    String newFragment = event.getNewFragment().toString();
+
+                    System.out.println("OFFSET: " + event.getOffset());
+                    System.out.println("OLD FRAG: [" + oldFragment + "]");
+                    System.out.println("NEW FRAG: [" + newFragment + "]");
+
+                    patches = patcher.makePatchAsList(documentText, oldFragment, newFragment, event.getOffset());
 
                     UserEdit edit = new UserEdit(0, relativeFilePath, patches);
 

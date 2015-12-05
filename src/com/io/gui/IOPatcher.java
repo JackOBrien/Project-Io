@@ -4,59 +4,42 @@ import java.util.LinkedList;
 
 public class IOPatcher extends diff_match_patch {
 
-    public Patch makeInsertPatch(String originalText, String newFragment, int newFragmentPosition) {
+    public Patch makePatch(String originalText, String oldFragment, String newFragment, int position) {
 
         Patch patch = new Patch();
 
         int lastIndex = originalText.length();
-        int start = Math.max(newFragmentPosition - (this.Patch_Margin * 2), 0);
-        int end = Math.min(lastIndex, newFragmentPosition + (this.Patch_Margin * 2));
+        int start = Math.max(position - this.Patch_Margin, 0);
+        int end = Math.min(lastIndex, position + oldFragment.length() + this.Patch_Margin);
 
         patch.start1 = patch.start2 = start;
-
         patch.length1 = end - start;
-        patch.length2 = patch.length1 + newFragment.length();
 
-        patch.diffs.add(new Diff(Operation.EQUAL, originalText.substring(start, newFragmentPosition)));
-        patch.diffs.add(new Diff(Operation.INSERT, newFragment));
-        patch.diffs.add(new Diff(Operation.EQUAL, originalText.substring(newFragmentPosition, end)));
+        patch.length2 = patch.length1 - oldFragment.length() + newFragment.length();
+
+        //Match a little before changes
+        patch.diffs.add(new Diff(Operation.EQUAL, originalText.substring(start, position)));
+
+        //Add delete if there is something to delete/replace
+        if (oldFragment.length() > 0) {
+            patch.diffs.add(new Diff(Operation.DELETE, oldFragment));
+        }
+
+        //Add insert if there is something to insert
+        if (newFragment.length() > 0) {
+            patch.diffs.add(new Diff(Operation.INSERT, newFragment));
+        }
+
+        //Match a little after changes
+        patch.diffs.add(new Diff(Operation.EQUAL, originalText.substring(position + oldFragment.length(), end)));
 
         return patch;
     }
 
-    public Patch makeDeletePatch(String originalText, String removedFragment, int removedFragmentPosition) {
-
-        Patch patch = new Patch();
-
-        int lastIndex = originalText.length();
-        int start = Math.max(removedFragmentPosition - this.Patch_Margin, 0);
-        int end = Math.min(lastIndex, removedFragmentPosition + this.Patch_Margin);
-
-        patch.start1 = patch.start2 = start;
-
-        patch.length1 = end - start;
-        patch.length2 = patch.length1 - removedFragment.length();
-
-        patch.diffs.add(new Diff(Operation.EQUAL, originalText.substring(start, removedFragmentPosition)));
-        patch.diffs.add(new Diff(Operation.DELETE, removedFragment));
-        patch.diffs.add(new Diff(Operation.EQUAL, originalText.substring(removedFragmentPosition + removedFragment.length())));
-
-        return patch;
-    }
-
-    public LinkedList<Patch> makeInsertPatchAsList(String originalText, String newFragment, int newFragmentPosition) {
+    public LinkedList<Patch> makePatchAsList(String originalText, String oldFragment, String newFragment, int position) {
 
         LinkedList<Patch> patches = new LinkedList<Patch>();
-        Patch patch = this.makeInsertPatch(originalText, newFragment, newFragmentPosition);
-        patches.add(patch);
-
-        return patches;
-    }
-
-    public LinkedList<Patch> makeDeletePatchAsList(String originalText, String removedFragment, int removedFragmentPosition) {
-
-        LinkedList<Patch> patches = new LinkedList<Patch>();
-        Patch patch = this.makeDeletePatch(originalText, removedFragment, removedFragmentPosition);
+        Patch patch = this.makePatch(originalText, oldFragment, newFragment, position);
         patches.add(patch);
 
         return patches;

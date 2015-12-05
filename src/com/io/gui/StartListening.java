@@ -78,9 +78,12 @@ public class StartListening {
                     IOPatcher patcher = new IOPatcher();
                     LinkedList<Patch> patches = null;
 
-                    //Inserting
+                    //Inserting else deleting
                     if (lengthDifference > 0) {
                         patches = patcher.makeInsertPatchAsList(event.getDocument().getText(), event.getNewFragment().toString(), event.getOffset());
+                    }
+                    else {
+                        patches = patcher.makeDeletePatchAsList(event.getDocument().getText(), event.getOldFragment().toString(), event.getOffset());
                     }
 
                     UserEdit edit = new UserEdit(0, relativeFilePath, patches);

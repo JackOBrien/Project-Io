@@ -1,15 +1,18 @@
 package com.io.gui;
 
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Hashtable;
 import java.util.List;
 
 public class IOProject implements ProjectComponent {
 
     private List<ProjectClosedEvent> projectClosedEvents = new ArrayList<>();
+    public Hashtable<Document, IOPatcher> patchers = new Hashtable<>();
 
     public IOProject(Project project) {
     }

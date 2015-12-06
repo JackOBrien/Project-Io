@@ -5,7 +5,6 @@ import com.io.domain.*;
 import com.io.gui.*;
 
 import javax.swing.*;
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -37,6 +36,7 @@ public class Server implements Runnable {
     private List<ConnectorEvent> listeners = new ArrayList<>();
     private List<ServerConnection> connections = new ArrayList<>();
     private Hashtable<Connector, ServerConnection> connectionLookup = new Hashtable<>();
+    private Hashtable<String, Integer> timestamps = new Hashtable<>();
 
     private UserListWindow userListWindow;
 
@@ -87,6 +87,9 @@ public class Server implements Runnable {
         this.addListener(new ConnectorEvent() {
             @Override
             public void applyUserEdit(UserEdit userEdit) {
+
+                applyTimestamp(userEdit);
+
                 receiving.applyUserEditToDocument(project, userEdit);
 
                 String editorsName = "<Not Found>";
@@ -208,6 +211,7 @@ public class Server implements Runnable {
             @Override
             public void sendChange(UserEdit userEdit) {
                 userEdit.setUserId(userId);
+                applyTimestamp(userEdit);
                 broadcastEdit(userEdit);
             }
 
@@ -270,9 +274,8 @@ public class Server implements Runnable {
 
     public void broadcastEdit(UserEdit userEdit) {
         for (ServerConnection connection: connections) {
-            if (connection.getUserId() != userEdit.getUserId()) {
-                connection.getConnector().sendUserEdit(userEdit);
-            }
+            //Send to all, even the original so that they can order their edits
+            connection.getConnector().sendUserEdit(userEdit);
         }
     }
 
@@ -320,6 +323,19 @@ public class Server implements Runnable {
                 break;
             }
         }
+    }
+
+    private void applyTimestamp(UserEdit userEdit) {
+        Integer timestamp = timestamps.get(userEdit.getFilePath());
+        if (timestamp == null) {
+            timestamp = new Integer(0);
+            timestamps.put(userEdit.getFilePath(), timestamp);
+        }
+        else {
+            timestamp++;
+        }
+
+        userEdit.setTimestamp(timestamp);
     }
 
     @Override

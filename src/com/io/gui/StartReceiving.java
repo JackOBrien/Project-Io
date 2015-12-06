@@ -16,6 +16,7 @@ import com.io.domain.UserEdit;
 
 import java.awt.*;
 import java.nio.file.Paths;
+import java.util.Hashtable;
 
 public class StartReceiving {
 
@@ -43,48 +44,80 @@ public class StartReceiving {
             return;
         }
 
-        // TODO: Make sure userEdit is not my id
-        //...
-
         // TODO: Remove this. -- TESTING ONLY --
         System.out.println("Applying edit from: " + userEdit.getUserId());
 
         //Apply userEdit
         WriteCommandAction.runWriteCommandAction(project, () -> {
-            if (userEdit.getEditText() == null) {
-                //Move cursor
-                //editor.getCaretModel().moveToOffset(userEdit.getOffset());
-            }
-            else {
-                synchronized (this) {
-                    listener.isListening = false;
+            synchronized (this) {
+                listener.isListening = false;
 
+                Document document = FileDocumentManager.getInstance().getDocument(file);
+                if (document == null) {
+                    System.out.println("Failed to find document.");
+                    listener.isListening = true;
+                    return;
+                }
 
-                    Document document = FileDocumentManager.getInstance().getDocument(file);
+                Editor[] editors = EditorFactory.getInstance().getEditors(document);
+                Editor editor = null;
+                int cursorPosition = 0;
 
-                    if (document == null) {
-                        System.out.println("Failed to find document.");
+                if (editors.length > 0) {
+                    editor = editors[0];
+                    cursorPosition = editor.getCaretModel().getOffset();
+                }
+
+                Hashtable<Document, IOPatcher> patchers = IOProject.getInstance(project).patchers;
+                IOPatcher patcher = patchers.get(document);
+                if (patcher == null) {
+                    //First time editing, so make patcher with current text as the base
+                    String text = document.getText();
+                    patcher = new IOPatcher(text);
+                    patchers.put(document, patcher);
+                    System.out.println("Created new patcher for: " + filePath);
+                }
+
+                String oldFragment = userEdit.getOldFragment();
+                String newFragment = userEdit.getNewFragment();
+                int position = userEdit.getPosition();
+                int timestamp = userEdit.getTimestamp();
+
+                if (timestamp < 0) {
+                    System.out.println("Error! Timestamp was not set by the server!");
+                    listener.isListening = true;
+                    return;
+                }
+
+                patcher.addPatch(oldFragment, newFragment, position, timestamp);
+                patcher.rebaseFile();
+
+                String newText = patcher.buildFile();
+
+                //If editor is open, try to keep cursor still
+                if (editor != null) {
+                    int diff = newText.length() - document.getTextLength();
+                    int lastChangePosition = patcher.getLastChangePosition();
+
+                    if (cursorPosition > lastChangePosition) {
+                        cursorPosition += diff;
+                        System.out.println("Moving cursor " + diff + " positions");
                     }
                     else {
-                        System.out.println("Found document");
+                        System.out.println("Keeping cursor still at " + cursorPosition);
                     }
-
-                    int diff = userEdit.getLengthDifference();
-                    int offset = userEdit.getOffset();
 
                     try {
-                        if (diff < 0) {
-                            document.deleteString(offset, offset + (-1 * diff));
-                        } else {
-                            document.insertString(offset, userEdit.getEditText());
-                        }
+                        editor.getCaretModel().moveToOffset(cursorPosition);
                     }
-                    catch(NullPointerException ex) {
-                        System.out.println("Failed to insert into document.");
+                    catch (Exception ex) {
+                        System.out.println("An error occurred when moving cursor after applying a patch");
                     }
-
-                    listener.isListening = true;
                 }
+
+                document.setText(newText);
+
+                listener.isListening = true;
             }
         });
     }

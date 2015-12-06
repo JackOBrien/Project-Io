@@ -1,5 +1,6 @@
 package com.io.gui;
 
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -12,6 +13,8 @@ import com.io.domain.UserEdit;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 
 /**
@@ -65,14 +68,27 @@ public class StartListening {
 
             if (!event.getNewFragment().toString().contains(dummyIdentifier)) {
                 if (!event.isWholeTextReplaced()) {
-                    int lengthDifference = event.getNewLength() - event.getOldLength();
-
                     //Get path relative to project root (e.g. src/Sample.java)
                     Path basePath = Paths.get(project.getBasePath());
                     Path absoluteFilePath = Paths.get(file.getPath());
                     String relativeFilePath = basePath.relativize(absoluteFilePath).toString();
 
-                    UserEdit edit = new UserEdit(0, event.getNewFragment().toString(), relativeFilePath, event.getOffset(), lengthDifference);
+                    String oldFragment = event.getOldFragment().toString();
+                    String newFragment = event.getNewFragment().toString();
+                    int offset = event.getOffset();
+
+                    Hashtable<Document, IOPatcher> patchers = IOProject.getInstance(project).patchers;
+                    Document document = event.getDocument();
+                    IOPatcher patcher = patchers.get(document);
+                    if (patcher == null) {
+                        //First time editing, so make patcher with current text as the base
+                        String text = document.getText();
+                        patcher = new IOPatcher(text);
+                        patchers.put(document, patcher);
+                        System.out.println("Created new patcher for: " + relativeFilePath);
+                    }
+
+                    UserEdit edit = new UserEdit(0, relativeFilePath, oldFragment, newFragment, offset);
 
                     for (EditorEvent editorEvent : events) {
                         editorEvent.sendChange(edit);

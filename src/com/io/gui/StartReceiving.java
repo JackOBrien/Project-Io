@@ -93,10 +93,12 @@ public class StartReceiving {
                 patcher.rebaseFile();
 
                 String newText = patcher.buildFile();
+                int diff = newText.length() - document.getTextLength();
+
+                document.setText(newText);
 
                 //If editor is open, try to keep cursor still
                 if (editor != null) {
-                    int diff = newText.length() - document.getTextLength();
                     int lastChangePosition = patcher.getLastChangePosition();
 
                     if (cursorPosition > lastChangePosition) {
@@ -114,8 +116,6 @@ public class StartReceiving {
                         System.out.println("An error occurred when moving cursor after applying a patch");
                     }
                 }
-
-                document.setText(newText);
 
                 listener.isListening = true;
             }

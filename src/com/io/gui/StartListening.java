@@ -6,12 +6,16 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.io.domain.CursorMovement;
 import com.io.domain.UserEdit;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+
+import com.io.gui.diff_match_patch.Patch;
 
 /**
  * Class which sets up the document to track changes and send them to the server.
@@ -64,14 +68,21 @@ public class StartListening {
 
             if (!event.getNewFragment().toString().contains(dummyIdentifier)) {
                 if (!event.isWholeTextReplaced()) {
-                    int lengthDifference = event.getNewLength() - event.getOldLength();
 
                     //Get path relative to project root (e.g. src/Sample.java)
                     Path basePath = Paths.get(project.getBasePath());
                     Path absoluteFilePath = Paths.get(file.getPath());
                     String relativeFilePath = basePath.relativize(absoluteFilePath).toString();
 
-                    UserEdit edit = new UserEdit(0, event.getNewFragment().toString(), relativeFilePath, event.getOffset(), lengthDifference);
+                    String documentText = event.getDocument().getText();
+                    String oldFragment = event.getOldFragment().toString();
+                    String newFragment = event.getNewFragment().toString();
+                    int offset = event.getOffset();
+
+                    IOPatcher patcher = new IOPatcher();
+                    LinkedList<Patch> patches = patcher.makePatchAsList(documentText, oldFragment, newFragment, offset);
+
+                    UserEdit edit = new UserEdit(0, relativeFilePath, patches);
 
                     for (EditorEvent editorEvent : events) {
                         editorEvent.sendChange(edit);
@@ -99,6 +110,11 @@ public class StartListening {
                 return;
             }
 
+            //Make sure file is in the project
+            if (!ProjectFileIndex.SERVICE.getInstance(project).isInSource(file)) {
+                return;
+            }
+
             int offset = event.getEditor().logicalPositionToOffset(event.getNewPosition());
 
             //Get path relative to project root (e.g. src/Sample.java)
@@ -106,10 +122,10 @@ public class StartListening {
             Path absoluteFilePath = Paths.get(file.getPath());
             String relativeFilePath = basePath.relativize(absoluteFilePath).toString();
 
-            UserEdit edit = new UserEdit(-1, relativeFilePath, offset, 0);
+            CursorMovement cursorMovement = new CursorMovement(-1, relativeFilePath, offset);
 
             for (EditorEvent editorEvent : events) {
-                editorEvent.sendChange(edit);
+                editorEvent.sendCursorMovement(cursorMovement);
             }
         }
 

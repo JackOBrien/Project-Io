@@ -4,6 +4,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -11,6 +12,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
+import com.io.domain.CursorMovement;
 import com.io.domain.UserEdit;
 
 import java.awt.*;
@@ -42,60 +44,84 @@ public class StartReceiving {
             return;
         }
 
-        // TODO: Make sure userEdit is not my id
-        //...
-
         // TODO: Remove this. -- TESTING ONLY --
         System.out.println("Applying edit from: " + userEdit.getUserId());
 
         //Apply userEdit
         WriteCommandAction.runWriteCommandAction(project, () -> {
-            if (userEdit.getEditText() == null) {
-                //Move cursor
-                //editor.getCaretModel().moveToOffset(userEdit.getOffset());
-            }
-            else {
-                synchronized (this) {
-                    listener.isListening = false;
+            synchronized (this) {
+                listener.isListening = false;
 
+                Document document = FileDocumentManager.getInstance().getDocument(file);
 
-                    Document document = FileDocumentManager.getInstance().getDocument(file);
+                if (document == null) {
+                    System.out.println("Failed to find document.");
+                    return;
+                }
 
-                    if (document == null) {
-                        System.out.println("Failed to find document.");
-                    }
-                    else {
-                        System.out.println("Found document");
-                    }
+                Editor[] editors = EditorFactory.getInstance().getEditors(document);
+                Editor editor = null;
+                int cursorPosition = 0;
 
-                    int diff = userEdit.getLengthDifference();
-                    int offset = userEdit.getOffset();
+                if (editors.length > 0) {
+                    editor = editors[0];
+                    cursorPosition = editor.getCaretModel().getOffset();
+                }
 
-                    try {
-                        if (diff < 0) {
-                            document.deleteString(offset, offset + (-1 * diff));
-                        } else {
-                            document.insertString(offset, userEdit.getEditText());
+                try {
+                    String currentText = document.getText();
+                    IOPatcher patcher = new IOPatcher();
+
+                    Object[] output = patcher.patch_apply(userEdit.getPatches(), currentText);
+                    String newText = (String)output[0];
+                    document.setText(newText);
+
+                    //If editor is open, try to keep cursor still
+                    if (editor != null) {
+
+                        //Get the list of positions where the patch was applied
+                        int[] patchPositions = (int[]) output[2];
+                        int patchPosition = -1;
+
+                        //Get the first non-negative position
+                        for (int i = 0; i < patchPositions.length; i++) {
+                            if (patchPositions[i] >= 0) {
+                                patchPosition = patchPositions[i];
+                                break;
+                            }
+                        }
+
+                        //If we found a patch position and the cursor is after that position
+                        //move the cursor position to whatever length the patch difference is
+                        if (patchPosition >= 0 && cursorPosition > patchPosition) {
+                            cursorPosition += newText.length() - currentText.length();
+                        }
+
+                        try {
+                            editor.getCaretModel().moveToOffset(cursorPosition);
+                        }
+                        catch (Exception ex) {
+                            System.out.println("An error occurred when moving cursor after applying a patch");
                         }
                     }
-                    catch(NullPointerException ex) {
-                        System.out.println("Failed to insert into document.");
-                    }
-
-                    listener.isListening = true;
                 }
+                catch(NullPointerException ex) {
+                    System.out.println("Failed to insert into document.");
+                }
+
+                listener.isListening = true;
             }
         });
     }
 
-    public void applyHighlightToDocument(Project project, UserEdit userEdit) {
+    public void applyHighlightToDocument(Project project, CursorMovement cursorMovement) {
 
         if (project.isDisposed()) {
             return;
         }
 
         WriteCommandAction.runWriteCommandAction(project, () -> {
-            String filePath = Paths.get(project.getBasePath(), userEdit.getFilePath()).toString();
+            String filePath = Paths.get(project.getBasePath(), cursorMovement.getFilePath()).toString();
 
             VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
 
@@ -105,6 +131,12 @@ public class StartReceiving {
             }
 
             Document document = FileDocumentManager.getInstance().getDocument(file);
+
+            if (document == null) {
+                System.out.println("Could not find document to highlight");
+                return;
+            }
+
             Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
 
             final TextAttributes attributes = new TextAttributes();
@@ -113,11 +145,16 @@ public class StartReceiving {
             attributes.setEffectColor(color);
             attributes.setEffectType(EffectType.SEARCH_MATCH);
             attributes.setBackgroundColor(color);
-            attributes.setForegroundColor(Color.WHITE);
+            attributes.setForegroundColor(JBColor.WHITE);
 
-            int start = userEdit.getOffset();
+            int start = cursorMovement.getPosition();
+
             int end = start + 1;
             int textLength = document.getTextLength();
+
+            if (textLength == 0) {
+                return;
+            }
 
             if (end > textLength) {
                 end = textLength;

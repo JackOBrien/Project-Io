@@ -140,7 +140,7 @@ public class StartReceiving {
             Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
 
             final TextAttributes attributes = new TextAttributes();
-            final JBColor color = JBColor.BLUE;
+            final JBColor color = Colors.getColorById(cursorMovement.getUserId());
 
             attributes.setEffectColor(color);
             attributes.setEffectType(EffectType.SEARCH_MATCH);

@@ -145,11 +145,8 @@ public class Server implements Runnable {
 
             @Override
             public void applyCursorMove(CursorMovement cursorMovement) {
-                if (userId == cursorMovement.getUserId()) {
-                    return;
-                }
-
                 receiving.applyHighlightToDocument(project, cursorMovement);
+                broadcastCursorMovement(cursorMovement);
             }
 
             @Override

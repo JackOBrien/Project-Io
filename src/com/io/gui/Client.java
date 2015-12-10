@@ -257,9 +257,9 @@ public class Client {
 
             @Override
             public void applyCursorMove(CursorMovement cursorMovement) {
-                if (userId == cursorMovement.getUserId()) {
-                    return;
-                }
+//                if (userId == cursorMovement.getUserId()) {
+//                    return;
+//                }
 
                 receiving.applyHighlightToDocument(project, cursorMovement);
             }

@@ -151,13 +151,6 @@ public class StartReceiving {
 
             Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
 
-            final TextAttributes attributes = new TextAttributes();
-
-            attributes.setEffectType(EffectType.SEARCH_MATCH);
-            attributes.setForegroundColor(JBColor.WHITE);
-
-
-
             // Records this cursor's location
             cursorPositions.put(cursorMovement.getUserId(), cursorMovement.getPosition());
 
@@ -180,7 +173,12 @@ public class StartReceiving {
                         start = textLength - 1;
                     }
 
-                    final JBColor color = Colors.getColorById(pair.getKey());
+                    JBColor color = Colors.getColorById(pair.getKey());
+
+                    TextAttributes attributes = new TextAttributes();
+
+                    attributes.setEffectType(EffectType.SEARCH_MATCH);
+                    attributes.setForegroundColor(JBColor.WHITE);
 
                     attributes.setEffectColor(color);
                     attributes.setBackgroundColor(color);

@@ -17,13 +17,19 @@ import com.io.domain.UserEdit;
 
 import java.awt.*;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class StartReceiving {
 
     StartListening listener;
 
+    private Map<Integer, Integer> cursorPositions;
+
     public StartReceiving(Project project, StartListening listener) {
         this.listener = listener;
+        cursorPositions = new HashMap<>();
     }
 
     public void applyUserEditToDocument(Project project, UserEdit userEdit) {
@@ -137,39 +143,51 @@ public class StartReceiving {
                 return;
             }
 
-            Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
-
-            final TextAttributes attributes = new TextAttributes();
-            final JBColor color = Colors.getColorById(cursorMovement.getUserId());
-
-            attributes.setEffectColor(color);
-            attributes.setEffectType(EffectType.SEARCH_MATCH);
-            attributes.setBackgroundColor(color);
-            attributes.setForegroundColor(JBColor.WHITE);
-
-            int start = cursorMovement.getPosition();
-
-            int end = start + 1;
             int textLength = document.getTextLength();
 
             if (textLength == 0) {
                 return;
             }
 
-            if (end > textLength) {
-                end = textLength;
-            }
-            if (start >= textLength) {
-                start = textLength - 1;
-            }
+            Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
+
+            final TextAttributes attributes = new TextAttributes();
+
+            attributes.setEffectType(EffectType.SEARCH_MATCH);
+            attributes.setForegroundColor(JBColor.WHITE);
+
+
+
+            // Records this cursor's location
+            cursorPositions.put(cursorMovement.getUserId(), cursorMovement.getPosition());
 
             for (Editor e : editors) {
                 for (RangeHighlighter highlighter : e.getMarkupModel().getAllHighlighters()) {
                     highlighter.dispose();
                 }
 
-                e.getMarkupModel().addRangeHighlighter(start, end,
-                        HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
+                for (Map.Entry<Integer, Integer> pair : cursorPositions.entrySet()) {
+
+
+                    int start = pair.getValue();
+
+                    int end = start + 1;
+
+                    if (end > textLength) {
+                        end = textLength;
+                    }
+                    if (start >= textLength) {
+                        start = textLength - 1;
+                    }
+
+                    final JBColor color = Colors.getColorById(pair.getKey());
+
+                    attributes.setEffectColor(color);
+                    attributes.setBackgroundColor(color);
+
+                    e.getMarkupModel().addRangeHighlighter(start, end,
+                            HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
+                }
             }
         });
     }

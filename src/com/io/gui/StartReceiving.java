@@ -1,10 +1,7 @@
 package com.io.gui;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -154,8 +151,8 @@ public class StartReceiving {
             // Records this cursor's location
             cursorPositions.put(cursorMovement.getUserId(), cursorMovement.getPosition());
 
-            for (Editor e : editors) {
-                for (RangeHighlighter highlighter : e.getMarkupModel().getAllHighlighters()) {
+            for (Editor editor : editors) {
+                for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
                     highlighter.dispose();
                 }
 
@@ -183,7 +180,7 @@ public class StartReceiving {
                     attributes.setEffectColor(color);
                     attributes.setBackgroundColor(color);
 
-                    e.getMarkupModel().addRangeHighlighter(start, end,
+                    editor.getMarkupModel().addRangeHighlighter(start, end,
                             HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
                 }
             }

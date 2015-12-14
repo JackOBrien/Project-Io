@@ -133,12 +133,12 @@ public class Client {
                         catch (IOException ex) {
                             System.out.println("Failed to open project");
                         }
-                        catch (JDOMException ex) {
-                            ex.printStackTrace();
-                        }
-                        catch (InvalidDataException ex) {
-                            System.out.println("Invalid project!");
-                        }
+//                        catch (JDOMException ex) {
+//                            ex.printStackTrace();
+//                        }
+//                        catch (InvalidDataException ex) {
+//                            System.out.println("Invalid project!");
+//                        }
 
                         if (newProject != null) {
                             System.out.println("Opening project.");

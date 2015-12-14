@@ -133,12 +133,12 @@ public class Client {
                         catch (IOException ex) {
                             System.out.println("Failed to open project");
                         }
-                        catch (JDOMException ex) {
-                            ex.printStackTrace();
-                        }
-                        catch (InvalidDataException ex) {
-                            System.out.println("Invalid project!");
-                        }
+//                        catch (JDOMException ex) {
+//                            ex.printStackTrace();
+//                        }
+//                        catch (InvalidDataException ex) {
+//                            System.out.println("Invalid project!");
+//                        }
 
                         if (newProject != null) {
                             System.out.println("Opening project.");
@@ -257,9 +257,9 @@ public class Client {
 
             @Override
             public void applyCursorMove(CursorMovement cursorMovement) {
-                if (userId == cursorMovement.getUserId()) {
-                    return;
-                }
+//                if (userId == cursorMovement.getUserId()) {
+//                    return;
+//                }
 
                 receiving.applyHighlightToDocument(project, cursorMovement);
             }

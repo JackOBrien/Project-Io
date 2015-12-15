@@ -1,5 +1,6 @@
 package com.io.net;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.io.domain.*;
 import com.io.gui.*;
@@ -7,7 +8,6 @@ import com.io.gui.*;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -166,19 +166,25 @@ public class Server implements Runnable {
             public void applyNewFiles(FileTransfer fileTransferRequest){
                 try {
                     String dir = project.getBasePath();
-                    byte[] content;
 
-                    try {
-                        content = Zip.zip(dir);
-                    }
-                    catch (IOException ex) {
-                        System.out.println("Failed to zip project files.");
-                        return;
-                    }
+                    ApplicationManager.getApplication().getInvokator().invokeLater(() -> {
+                        byte[] content;
 
-                    FileTransfer fileTransfer = new FileTransfer(userId, project.getName(), content);
+                        ApplicationManager.getApplication().saveAll();
+                        System.out.println("Flushed changes to disk");
 
-                    sendFileTransfer(fileTransferRequest.getUserId(), fileTransfer);
+                        try {
+                            content = Zip.zip(dir);
+                        }
+                        catch (IOException ex) {
+                            System.out.println("Failed to zip project files.");
+                            return;
+                        }
+
+                        FileTransfer fileTransfer = new FileTransfer(userId, project.getName(), content);
+
+                        sendFileTransfer(fileTransferRequest.getUserId(), fileTransfer);
+                    });
                 }catch (Exception e){
                     e.getMessage();
                     e.printStackTrace();

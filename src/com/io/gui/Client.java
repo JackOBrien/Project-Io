@@ -14,6 +14,8 @@ import com.io.net.UnZip;
 import org.jdom.JDOMException;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -33,9 +35,21 @@ public class Client {
     private UserListWindow userListWindow;
     private Project project;
 
+    private int followingUserId;
+
     public Client () {
 
-        userListWindow = new UserListWindow();
+        followingUserId = -1; //Not following a user initially
+
+        ActionListener followListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Button Pressed: " + e.getActionCommand());
+                followingUserId = Integer.parseInt(e.getActionCommand());
+            }
+        };
+
+        userListWindow = new UserListWindow(followListener);
 
         try {
             connector = new Connector();
@@ -261,7 +275,7 @@ public class Client {
 //                    return;
 //                }
 
-                receiving.applyHighlightToDocument(project, cursorMovement);
+                receiving.applyHighlightToDocument(project, cursorMovement, followingUserId);
             }
         });
 

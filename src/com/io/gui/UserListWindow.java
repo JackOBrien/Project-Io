@@ -23,21 +23,32 @@ public class UserListWindow extends JPanel {
 
     private JTextArea chatArea;
 
-    public UserListWindow() {
+    private ActionListener followUserListener;
+
+    public UserListWindow(ActionListener followUserListener) {
+
+        this.followUserListener = followUserListener;
 
         this.setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
 
         //Create user list
-        users = new DefaultListModel<>();
-        JBList userList = new JBList(users);
+//        users = new DefaultListModel<>();
+//        JBList userList = new JBList(users);
+
+        JPanel userListPanel = new JPanel();
+        userListPanel.setLayout(new BoxLayout(userListPanel, BoxLayout.Y_AXIS));
+        JButton testButton = new JButton("TEST (01)");
+        testButton.setActionCommand("0");
+        testButton.addActionListener(followUserListener);
+        userListPanel.add(testButton);
 
         c.gridx = 0;
         c.gridy = 0;
         c.gridheight = 2;
         c.ipadx = 50;
-        this.add(userList, c);
+        this.add(userListPanel, c);
 
         //Create chat controls
         chatArea = new JTextArea(10, 50);
@@ -79,8 +90,8 @@ public class UserListWindow extends JPanel {
 
     }
 
-    public UserListWindow(Project project) {
-        this();
+    public UserListWindow(Project project, ActionListener followUserListener) {
+        this(followUserListener);
         attachToProject(project);
     }
 
@@ -92,6 +103,7 @@ public class UserListWindow extends JPanel {
     }
 
     public void addUser(UserInfo user) {
+
         ApplicationManager.getApplication().invokeLater(() -> {
             this.users.addElement(user);
         });
@@ -130,5 +142,4 @@ public class UserListWindow extends JPanel {
             }
         }
     }
-
 }

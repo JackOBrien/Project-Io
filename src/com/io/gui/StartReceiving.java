@@ -117,7 +117,7 @@ public class StartReceiving {
         });
     }
 
-    public void applyHighlightToDocument(Project project, CursorMovement cursorMovement) {
+    public void applyHighlightToDocument(Project project, CursorMovement cursorMovement, int followingUserId) {
 
         if (project.isDisposed()) {
             return;
@@ -156,6 +156,8 @@ public class StartReceiving {
                     highlighter.dispose();
                 }
 
+                CaretModel caretModel = editor.getCaretModel();
+
                 for (Map.Entry<Integer, Integer> pair : cursorPositions.entrySet()) {
 
 
@@ -182,6 +184,14 @@ public class StartReceiving {
 
                     editor.getMarkupModel().addRangeHighlighter(start, end,
                             HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
+
+                    if (followingUserId >= 0 && followingUserId == pair.getKey()) {
+                        caretModel.moveToOffset(start);
+                        LogicalPosition newPosition = caretModel.getLogicalPosition();
+                        ScrollingModel scrollingModel = editor.getScrollingModel();
+                        scrollingModel.disableAnimation();
+                        scrollingModel.scrollTo(newPosition, ScrollType.MAKE_VISIBLE);
+                    }
                 }
             }
         });

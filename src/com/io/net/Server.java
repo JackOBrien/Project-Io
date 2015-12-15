@@ -5,6 +5,8 @@ import com.io.domain.*;
 import com.io.gui.*;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -40,10 +42,21 @@ public class Server implements Runnable {
 
     private UserListWindow userListWindow;
 
+    private int followingUserId;
+
     public Server(final Project project) {
 
         listening = new StartListening(project);
         receiving = new StartReceiving(project, listening);
+
+        followingUserId = -1; //Not following a user initially
+
+        ActionListener followListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                followingUserId = Integer.parseInt(e.getActionCommand());
+            }
+        };
 
         userId = INITIAL_USER_ID;
         username = JOptionPane.showInputDialog("Please enter a username");
@@ -51,7 +64,7 @@ public class Server implements Runnable {
             username = INITIAL_USER_NAME;
         }
 
-        userListWindow = new UserListWindow(project);
+        userListWindow = new UserListWindow(project, followListener);
         userListWindow.addUser(new UserInfo(userId, username));
 
 
@@ -145,7 +158,7 @@ public class Server implements Runnable {
 
             @Override
             public void applyCursorMove(CursorMovement cursorMovement) {
-                receiving.applyHighlightToDocument(project, cursorMovement);
+                receiving.applyHighlightToDocument(project, cursorMovement, followingUserId);
                 broadcastCursorMovement(cursorMovement);
             }
 

@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -20,15 +19,15 @@ import java.util.ArrayList;
 public class UserListWindow extends JPanel {
 
     private DefaultListModel<UserInfo> users;
+    private ActionListener followUserListener;
     private ChatEvent chatEvent = null;
 
     private JTextArea chatArea;
-
+    private JButton stopFollowing = null;
     private JPanel userListPanel;
 
-    private ActionListener followUserListener;
-
     private ArrayList<JButton> buttonList;
+
 
     public UserListWindow(ActionListener followUserListener) {
 
@@ -104,39 +103,62 @@ public class UserListWindow extends JPanel {
     }
 
     public void addUser(UserInfo user) {
+        this.addUser(user, false);
+    }
+
+    public void addUser(UserInfo user, Boolean isSelf) {
 
         JButton button = new JButton(user.getUsername());
         button.setActionCommand(Integer.toString(user.getUserId()));
         button.addActionListener(followUserListener);
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JButton source = (JButton) e.getSource();
-                JButton stopFollowing = new JButton("Stop Following " + source.getText());
-                stopFollowing.setActionCommand("-1");
-                stopFollowing.addActionListener(followUserListener);
-                stopFollowing.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        JButton source = (JButton) e.getSource();
-                        ApplicationManager.getApplication().invokeLater(() -> {
-                            userListPanel.remove(source);
-                            userListPanel.repaint();
-                        });
-                    }
-                });
 
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    userListPanel.add(stopFollowing);
-                });
-            }
-        });
+        if (isSelf) {
+            button.setEnabled(false);
+        }
+        else {
+            UserListWindow self = this;
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    JButton source = (JButton) e.getSource();
+                    JButton stopFollowing = new JButton("Stop Following " + source.getText());
+                    stopFollowing.setActionCommand("-1");
+                    stopFollowing.addActionListener(followUserListener);
+                    stopFollowing.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            JButton source = (JButton) e.getSource();
+                            SwingUtilities.invokeLater(() -> {
+                                userListPanel.remove(source);
 
+                                self.revalidate();
+                                self.repaint();
+                            });
+                        }
+                    });
+
+                    SwingUtilities.invokeLater(() -> {
+                        if (self.stopFollowing != null) {
+                            userListPanel.remove(self.stopFollowing);
+                        }
+
+                        self.stopFollowing = stopFollowing;
+                        userListPanel.add(self.stopFollowing);
+
+                        self.revalidate();
+                        self.repaint();
+                    });
+                }
+            });
+        }
 
         buttonList.add(button);
 
-        ApplicationManager.getApplication().invokeLater(() -> {
+        SwingUtilities.invokeLater(() -> {
             userListPanel.add(button);
+
+            this.revalidate();
+            this.repaint();
         });
     }
 

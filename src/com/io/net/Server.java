@@ -1,11 +1,9 @@
 package com.io.net;
 
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.io.domain.*;
 import com.io.gui.*;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -18,7 +16,6 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 
 
 public class Server implements Runnable {
@@ -63,6 +60,7 @@ public class Server implements Runnable {
             }
         };
 
+
         userId = INITIAL_USER_ID;
         username = JOptionPane.showInputDialog("Please enter a username");
         if (username.isEmpty()) {
@@ -70,7 +68,7 @@ public class Server implements Runnable {
         }
 
         userListWindow = new UserListWindow(project, followListener);
-        userListWindow.addUser(new UserInfo(userId, username));
+        userListWindow.addUser(new UserInfo(userId, username), true);
 
 
         //Broadcast chat messages from server user

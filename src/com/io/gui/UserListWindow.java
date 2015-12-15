@@ -41,6 +41,7 @@ public class UserListWindow extends JPanel {
         //Create user list
         userListPanel = new JPanel();
         userListPanel.setLayout(new BoxLayout(userListPanel, BoxLayout.Y_AXIS));
+        userListPanel.add(new JLabel("Select a user to Follow"));
 
         buttonList = new ArrayList<>();
 
@@ -107,6 +108,31 @@ public class UserListWindow extends JPanel {
         JButton button = new JButton(user.getUsername());
         button.setActionCommand(Integer.toString(user.getUserId()));
         button.addActionListener(followUserListener);
+        button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JButton source = (JButton) e.getSource();
+                JButton stopFollowing = new JButton("Stop Following " + source.getText());
+                stopFollowing.setActionCommand("-1");
+                stopFollowing.addActionListener(followUserListener);
+                stopFollowing.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        JButton source = (JButton) e.getSource();
+                        ApplicationManager.getApplication().invokeLater(() -> {
+                            userListPanel.remove(source);
+                            userListPanel.repaint();
+                        });
+                    }
+                });
+
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    userListPanel.add(stopFollowing);
+                });
+            }
+        });
+
+
         buttonList.add(button);
 
         ApplicationManager.getApplication().invokeLater(() -> {

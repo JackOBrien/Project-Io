@@ -3,7 +3,7 @@ package com.io.gui;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -12,10 +12,8 @@ import com.intellij.ui.JBColor;
 import com.io.domain.CursorMovement;
 import com.io.domain.UserEdit;
 
-import java.awt.*;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 public class StartReceiving {
@@ -186,6 +184,7 @@ public class StartReceiving {
                             HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
 
                     if (followingUserId >= 0 && followingUserId == pair.getKey()) {
+                        FileEditorManager.getInstance(project).openFile(file, true);
                         caretModel.moveToOffset(start);
                         LogicalPosition newPosition = caretModel.getLogicalPosition();
                         ScrollingModel scrollingModel = editor.getScrollingModel();

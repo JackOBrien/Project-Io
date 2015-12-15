@@ -20,15 +20,15 @@ import java.util.ArrayList;
 public class UserListWindow extends JPanel {
 
     private DefaultListModel<UserInfo> users;
+    private ActionListener followUserListener;
     private ChatEvent chatEvent = null;
 
     private JTextArea chatArea;
-
+    private JButton stopFollowing = null;
     private JPanel userListPanel;
 
-    private ActionListener followUserListener;
-
     private ArrayList<JButton> buttonList;
+
 
     public UserListWindow(ActionListener followUserListener) {
 
@@ -108,6 +108,9 @@ public class UserListWindow extends JPanel {
         JButton button = new JButton(user.getUsername());
         button.setActionCommand(Integer.toString(user.getUserId()));
         button.addActionListener(followUserListener);
+
+        UserListWindow self = this;
+
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -119,24 +122,36 @@ public class UserListWindow extends JPanel {
                     @Override
                     public void actionPerformed(ActionEvent e) {
                         JButton source = (JButton) e.getSource();
-                        ApplicationManager.getApplication().invokeLater(() -> {
+                        SwingUtilities.invokeLater(() -> {
                             userListPanel.remove(source);
-                            userListPanel.repaint();
+
+                            self.revalidate();
+                            self.repaint();
                         });
                     }
                 });
 
-                ApplicationManager.getApplication().invokeLater(() -> {
-                    userListPanel.add(stopFollowing);
+                SwingUtilities.invokeLater(() -> {
+                    if (self.stopFollowing != null) {
+                        userListPanel.remove(self.stopFollowing);
+                    }
+
+                    self.stopFollowing = stopFollowing;
+                    userListPanel.add(self.stopFollowing);
+
+                    self.revalidate();
+                    self.repaint();
                 });
             }
         });
 
-
         buttonList.add(button);
 
-        ApplicationManager.getApplication().invokeLater(() -> {
+        SwingUtilities.invokeLater(() -> {
             userListPanel.add(button);
+
+            this.revalidate();
+            this.repaint();
         });
     }
 

@@ -4,14 +4,12 @@ package com.io.gui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.wm.WindowManager;
 import com.io.domain.*;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
 import com.io.net.Server;
 import com.io.net.UnZip;
-import org.jdom.JDOMException;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -38,7 +36,8 @@ public class Client {
         userListWindow = new UserListWindow();
 
         try {
-            connector = new Connector();
+            String ip = askForIP();
+            connector = new Connector(ip);
         } catch(IOException ex) {
             System.out.println("Failed to connect to server");
             return;
@@ -133,12 +132,6 @@ public class Client {
                         catch (IOException ex) {
                             System.out.println("Failed to open project");
                         }
-//                        catch (JDOMException ex) {
-//                            ex.printStackTrace();
-//                        }
-//                        catch (InvalidDataException ex) {
-//                            System.out.println("Invalid project!");
-//                        }
 
                         if (newProject != null) {
                             System.out.println("Opening project.");
@@ -265,6 +258,12 @@ public class Client {
             }
         });
 
+    }
+
+    private String askForIP() {
+        String ip = JOptionPane.showInputDialog("Please enter the server IP");
+
+        return ip;
     }
 
     private void login() {

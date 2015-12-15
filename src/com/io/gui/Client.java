@@ -1,6 +1,7 @@
 package com.io.gui;
 
 
+import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -37,6 +38,12 @@ public class Client {
 
         try {
             String ip = askForIP();
+
+            if (ip == null) {
+                System.out.println("Destination invalid, quitting");
+                return;
+            }
+
             connector = new Connector(ip);
         } catch(IOException ex) {
             System.out.println("Failed to connect to server");
@@ -261,9 +268,13 @@ public class Client {
     }
 
     private String askForIP() {
-        String ip = JOptionPane.showInputDialog("Please enter the server IP");
+        String ip = JOptionPane.showInputDialog("Please enter the server IP", "127.0.0.1");
 
-        return ip;
+        if (IPValidation.isIp(ip)) {
+            return ip;
+        }
+
+        return null;
     }
 
     private void login() {

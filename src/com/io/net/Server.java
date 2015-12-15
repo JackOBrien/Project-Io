@@ -1,9 +1,11 @@
 package com.io.net;
 
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.io.domain.*;
 import com.io.gui.*;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 
 public class Server implements Runnable {
@@ -39,6 +42,8 @@ public class Server implements Runnable {
     private Hashtable<Connector, ServerConnection> connectionLookup = new Hashtable<>();
 
     private UserListWindow userListWindow;
+
+    private Thread executionThread = null;
 
     public Server(final Project project) {
 
@@ -82,6 +87,8 @@ public class Server implements Runnable {
             catch (IOException ex) {
                 System.out.println("Failed to disconnect from clients");
             }
+
+            this.executionThread.interrupt();
         });
 
         this.addListener(new ConnectorEvent() {
@@ -119,22 +126,7 @@ public class Server implements Runnable {
 
             @Override
             public void applyLogout(Logout logout, Connector connector) {
-
-                ServerConnection serverConnection = findServerConnection(connector);
-                int userId = serverConnection.getUserId();
-                String username = serverConnection.getUsername();
-
-                //Remove all connection objects belonging to the user
-                connections.remove(serverConnection);
-                connectionLookup.remove(connector);
-                userListWindow.removeUserById(userId);
-
-                System.out.println("[" + username + "](" + userId + ") disconnected");
-
-                //Broadcast logout to other clients
-                for (ServerConnection connection : connections) {
-                    connection.getConnector().sendLogout(logout);
-                }
+                logout(connector);
             }
 
 
@@ -172,7 +164,7 @@ public class Server implements Runnable {
 
                         sendFileTransfer(fileTransferRequest.getUserId(), fileTransfer);
                     });
-                }catch (Exception e){
+                } catch (Exception e){
                     e.getMessage();
                     e.printStackTrace();
                 }
@@ -205,6 +197,15 @@ public class Server implements Runnable {
 
                 System.out.println("[" + username + "](" + userId + ") has disconnected from server");
             }
+
+            @Override
+            public void onSendFail(Connector connector) {
+                System.out.println("Write Fail. Disconnecting from client");
+
+                ApplicationManager.getApplication().getInvokator().invokeLater(() -> {
+                    logout(connector);
+                });
+            }
         });
 
         listening.addEventListener(new EditorEvent() {
@@ -221,7 +222,9 @@ public class Server implements Runnable {
             }
         });
 
-        (new Thread(this)).start();
+        this.executionThread = new Thread(this);
+        this.executionThread.start();
+
         System.out.println("Server started");
 
     }
@@ -313,6 +316,32 @@ public class Server implements Runnable {
             if (connection.getUserId() != userId) {
                 connection.getConnector().sendConnectionUpdate(connectionUpdate);
             }
+        }
+    }
+
+    private void logout(Connector connector) {
+        ServerConnection serverConnection = findServerConnection(connector);
+
+        if (serverConnection == null) {
+            System.out.println("Could not find server connection");
+            return;
+        }
+
+        int userId = serverConnection.getUserId();
+        String username = serverConnection.getUsername();
+
+        //Remove all connection objects belonging to the user
+        connections.remove(serverConnection);
+        connectionLookup.remove(connector);
+        userListWindow.removeUserById(userId);
+
+        System.out.println("[" + username + "](" + userId + ") disconnected");
+
+        Logout logout = new Logout(userId);
+
+        //Broadcast logout to other clients
+        for (ServerConnection connection : connections) {
+            connection.getConnector().sendLogout(logout);
         }
     }
 

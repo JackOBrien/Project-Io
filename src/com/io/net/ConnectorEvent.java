@@ -15,6 +15,7 @@ public interface ConnectorEvent {
     void applyChatMessage(ChatMessage chatMessage, Connector connector);
 
     void onDisconnect(Connector connector);
+    void onSendFail(Connector connector);
 
     void applyCursorMove(CursorMovement cursorMovement);
 }

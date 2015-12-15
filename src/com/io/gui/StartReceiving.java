@@ -13,18 +13,19 @@ import com.io.domain.CursorMovement;
 import com.io.domain.UserEdit;
 
 import java.nio.file.Paths;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Hashtable;
 import java.util.Map;
 
 public class StartReceiving {
 
     StartListening listener;
 
-    private Map<Integer, Integer> cursorPositions;
+    private Map<Integer, CursorPosition> cursorPositions;
 
     public StartReceiving(Project project, StartListening listener) {
         this.listener = listener;
-        cursorPositions = new HashMap<>();
+        cursorPositions = new Hashtable<>();
     }
 
     public void applyUserEditToDocument(Project project, UserEdit userEdit) {
@@ -121,78 +122,113 @@ public class StartReceiving {
             return;
         }
 
+        String basePath = project.getBasePath();
+        if (basePath == null) {
+            return;
+        }
+
+        String filePath = Paths.get(basePath, cursorMovement.getFilePath()).toString();
+
+        VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
+        if (file == null || !ProjectFileIndex.SERVICE.getInstance(project).isInSource(file)) {
+            System.out.println("Could not find file.");
+            return;
+        }
+
+        // Records this cursor's location
+        CursorPosition cursorPosition = new CursorPosition(file, cursorMovement.getPosition());
+        cursorPositions.put(cursorMovement.getUserId(), cursorPosition);
+
         WriteCommandAction.runWriteCommandAction(project, () -> {
-            String filePath = Paths.get(project.getBasePath(), cursorMovement.getFilePath()).toString();
 
-            VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
+            //Remove all highlights
+            Editor[] editors = EditorFactory.getInstance().getAllEditors();
+            Arrays.stream(editors)
+                    .filter((editor) -> editor.getProject() == project)
+                    .forEach((editor) -> editor.getMarkupModel().removeAllHighlighters());
 
-            if (file == null || !ProjectFileIndex.SERVICE.getInstance(project).isInSource(file)) {
-                System.out.println("Could not find file.");
-                return;
-            }
+            //Apply each highlight to the specific editor
+            cursorPositions.forEach((key, value) -> {
 
-            Document document = FileDocumentManager.getInstance().getDocument(file);
-
-            if (document == null) {
-                System.out.println("Could not find document to highlight");
-                return;
-            }
-
-            int textLength = document.getTextLength();
-
-            if (textLength == 0) {
-                return;
-            }
-
-            Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
-
-            // Records this cursor's location
-            cursorPositions.put(cursorMovement.getUserId(), cursorMovement.getPosition());
-
-            for (Editor editor : editors) {
-                for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
-                    highlighter.dispose();
+                Document doc = FileDocumentManager.getInstance().getDocument(value.File);
+                if (doc == null) {
+                    return;
                 }
 
-                CaretModel caretModel = editor.getCaretModel();
+                int textLength = doc.getTextLength();
+                if (textLength == 0) {
+                    return;
+                }
 
-                for (Map.Entry<Integer, Integer> pair : cursorPositions.entrySet()) {
+                Range range = new Range(value.Position, doc.getTextLength());
+                TextAttributes attributes = buildAttributes(key);
 
+                Editor[] docEditors = EditorFactory.getInstance().getEditors(doc);
 
-                    int start = pair.getValue();
+                if (docEditors.length == 0 && followingUserId >= 0 && followingUserId == key) {
+                    System.out.println("Need to open editor to follow");
+                }
+                else {
+                    Editor firstEditor = docEditors[0];
+                    firstEditor.getMarkupModel().addRangeHighlighter(range.Start, range.End, HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
 
-                    int end = start + 1;
-
-                    if (end > textLength) {
-                        end = textLength;
-                    }
-                    if (start >= textLength) {
-                        start = textLength - 1;
-                    }
-
-                    JBColor color = Colors.getColorById(pair.getKey());
-
-                    TextAttributes attributes = new TextAttributes();
-
-                    attributes.setEffectType(EffectType.SEARCH_MATCH);
-                    attributes.setForegroundColor(JBColor.WHITE);
-
-                    attributes.setEffectColor(color);
-                    attributes.setBackgroundColor(color);
-
-                    editor.getMarkupModel().addRangeHighlighter(start, end,
-                            HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
-
-                    if (followingUserId >= 0 && followingUserId == pair.getKey()) {
+                    if (followingUserId >= 0 && followingUserId == key) {
                         FileEditorManager.getInstance(project).openFile(file, true);
-                        caretModel.moveToOffset(start);
-                        LogicalPosition newPosition = caretModel.getLogicalPosition();
-                        ScrollingModel scrollingModel = editor.getScrollingModel();
+                        ScrollingModel scrollingModel = firstEditor.getScrollingModel();
                         scrollingModel.disableAnimation();
-                        scrollingModel.scrollTo(newPosition, ScrollType.MAKE_VISIBLE);
+
+                        try {
+                            LogicalPosition logicalPosition = firstEditor.offsetToLogicalPosition(value.Position);
+                            scrollingModel.scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
+                        }
+                        catch (IndexOutOfBoundsException ex) {
+                            System.out.println("Out of bounds scrolling");
+                        }
                     }
                 }
-            }
+
+            });
         });
+    }
+
+    private TextAttributes buildAttributes(int id) {
+        JBColor color = Colors.getColorById(id);
+
+        TextAttributes attributes = new TextAttributes();
+
+        attributes.setEffectType(EffectType.SEARCH_MATCH);
+        attributes.setForegroundColor(JBColor.WHITE);
+
+        attributes.setEffectColor(color);
+        attributes.setBackgroundColor(color);
+
+        return attributes;
+    }
+
+    private class CursorPosition {
+        public VirtualFile File;
+        public int Position;
+
+        public CursorPosition(VirtualFile file, int position) {
+            File = file;
+            Position = position;
+        }
+    }
+
+    private class Range {
+        public int Start, End;
+
+        public Range(int position, int documentLength) {
+            Start = position;
+            End = position + 1;
+
+            if (End > documentLength) {
+                End = documentLength;
+            }
+
+            if (Start >= documentLength) {
+                Start = documentLength - 1;
+            }
+        }
     }
 }

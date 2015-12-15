@@ -16,6 +16,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 
 public class Server implements Runnable {
@@ -41,6 +42,8 @@ public class Server implements Runnable {
     private Hashtable<Connector, ServerConnection> connectionLookup = new Hashtable<>();
 
     private UserListWindow userListWindow;
+
+    private Thread executionThread = null;
 
     public Server(final Project project) {
 
@@ -84,6 +87,8 @@ public class Server implements Runnable {
             catch (IOException ex) {
                 System.out.println("Failed to disconnect from clients");
             }
+
+            this.executionThread.interrupt();
         });
 
         this.addListener(new ConnectorEvent() {
@@ -217,7 +222,9 @@ public class Server implements Runnable {
             }
         });
 
-        (new Thread(this)).start();
+        this.executionThread = new Thread(this);
+        this.executionThread.start();
+
         System.out.println("Server started");
 
     }

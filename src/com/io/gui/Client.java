@@ -1,9 +1,9 @@
 package com.io.gui;
 
 
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.wm.WindowManager;
 import com.io.domain.*;
@@ -31,6 +31,8 @@ public class Client {
 
     private UserListWindow userListWindow;
     private Project project;
+
+    private Thread executionThread = null;
 
     public Client () {
 
@@ -186,6 +188,18 @@ public class Client {
             @Override
             public void onSendFail(Connector connector) {
                 System.out.println("Client failed to write");
+
+                try {
+                    connector.disconnect();
+                    System.out.println("Disconnected from server");
+                }
+                catch (IOException ex) {
+                    System.out.println("Failed to disconnect from server");
+                }
+
+                ApplicationManager.getApplication().getInvokator().invokeLater(() -> {
+                    ProjectManager.getInstance().closeProject(project);
+                });
             }
 
             @Override
@@ -194,7 +208,8 @@ public class Client {
             }
         });
 
-        (new Thread(connector)).start();
+        this.executionThread = new Thread(connector);
+        this.executionThread.start();
 
         login();
     }
@@ -223,6 +238,7 @@ public class Client {
 
         IOProject.getInstance(project).addProjectClosedListener(() -> {
             logout();
+            this.executionThread.interrupt();
         });
 
         connector.addEventListener(new ConnectorEvent() {

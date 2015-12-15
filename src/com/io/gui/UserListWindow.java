@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
@@ -104,46 +103,54 @@ public class UserListWindow extends JPanel {
     }
 
     public void addUser(UserInfo user) {
+        this.addUser(user, false);
+    }
+
+    public void addUser(UserInfo user, Boolean isSelf) {
 
         JButton button = new JButton(user.getUsername());
         button.setActionCommand(Integer.toString(user.getUserId()));
         button.addActionListener(followUserListener);
 
-        UserListWindow self = this;
+        if (isSelf) {
+            button.setEnabled(false);
+        }
+        else {
+            UserListWindow self = this;
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    JButton source = (JButton) e.getSource();
+                    JButton stopFollowing = new JButton("Stop Following " + source.getText());
+                    stopFollowing.setActionCommand("-1");
+                    stopFollowing.addActionListener(followUserListener);
+                    stopFollowing.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            JButton source = (JButton) e.getSource();
+                            SwingUtilities.invokeLater(() -> {
+                                userListPanel.remove(source);
 
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JButton source = (JButton) e.getSource();
-                JButton stopFollowing = new JButton("Stop Following " + source.getText());
-                stopFollowing.setActionCommand("-1");
-                stopFollowing.addActionListener(followUserListener);
-                stopFollowing.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        JButton source = (JButton) e.getSource();
-                        SwingUtilities.invokeLater(() -> {
-                            userListPanel.remove(source);
+                                self.revalidate();
+                                self.repaint();
+                            });
+                        }
+                    });
 
-                            self.revalidate();
-                            self.repaint();
-                        });
-                    }
-                });
+                    SwingUtilities.invokeLater(() -> {
+                        if (self.stopFollowing != null) {
+                            userListPanel.remove(self.stopFollowing);
+                        }
 
-                SwingUtilities.invokeLater(() -> {
-                    if (self.stopFollowing != null) {
-                        userListPanel.remove(self.stopFollowing);
-                    }
+                        self.stopFollowing = stopFollowing;
+                        userListPanel.add(self.stopFollowing);
 
-                    self.stopFollowing = stopFollowing;
-                    userListPanel.add(self.stopFollowing);
-
-                    self.revalidate();
-                    self.repaint();
-                });
-            }
-        });
+                        self.revalidate();
+                        self.repaint();
+                    });
+                }
+            });
+        }
 
         buttonList.add(button);
 

@@ -89,7 +89,7 @@ public class Client {
             public void applyUserId(Login login, Connector connector) {
                 userId = login.getUserId();
                 username = login.getUsername();
-                userListWindow.addUser(new UserInfo(userId, username));
+                userListWindow.addUser(new UserInfo(userId, username), true);
                 System.out.println("User id is now " + userId);
                 requestFiles();
             }

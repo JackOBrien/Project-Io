@@ -3,15 +3,14 @@ package com.io.gui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.wm.WindowManager;
 import com.io.domain.*;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
 import com.io.net.Server;
 import com.io.net.UnZip;
-import org.jdom.JDOMException;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -36,6 +35,7 @@ public class Client {
     private Project project;
 
     private int followingUserId;
+    private Thread executionThread = null;
 
     public Client () {
 
@@ -52,8 +52,17 @@ public class Client {
         userListWindow = new UserListWindow(followListener);
 
         try {
-            connector = new Connector();
+            String ip = askForIP();
+
+            if (ip == null) {
+                JOptionPane.showMessageDialog(null, "Invalid IP!", "Failed to Connect", JOptionPane.ERROR_MESSAGE);
+                System.out.println("Destination invalid, quitting");
+                return;
+            }
+
+            connector = new Connector(ip);
         } catch(IOException ex) {
+            JOptionPane.showMessageDialog(null, "Could not connect to server. Wrong IP?", "Failed to Connect", JOptionPane.ERROR_MESSAGE);
             System.out.println("Failed to connect to server");
             return;
         }
@@ -147,12 +156,6 @@ public class Client {
                         catch (IOException ex) {
                             System.out.println("Failed to open project");
                         }
-//                        catch (JDOMException ex) {
-//                            ex.printStackTrace();
-//                        }
-//                        catch (InvalidDataException ex) {
-//                            System.out.println("Invalid project!");
-//                        }
 
                         if (newProject != null) {
                             System.out.println("Opening project.");
@@ -196,12 +199,30 @@ public class Client {
             }
 
             @Override
+            public void onSendFail(Connector connector) {
+                System.out.println("Client failed to write");
+
+                try {
+                    connector.disconnect();
+                    System.out.println("Disconnected from server");
+                }
+                catch (IOException ex) {
+                    System.out.println("Failed to disconnect from server");
+                }
+
+                ApplicationManager.getApplication().getInvokator().invokeLater(() -> {
+                    ProjectManager.getInstance().closeProject(project);
+                });
+            }
+
+            @Override
             public void applyCursorMove(CursorMovement cursorMovement) {
 
             }
         });
 
-        (new Thread(connector)).start();
+        this.executionThread = new Thread(connector);
+        this.executionThread.start();
 
         login();
     }
@@ -230,6 +251,7 @@ public class Client {
 
         IOProject.getInstance(project).addProjectClosedListener(() -> {
             logout();
+            this.executionThread.interrupt();
         });
 
         connector.addEventListener(new ConnectorEvent() {
@@ -270,6 +292,11 @@ public class Client {
             }
 
             @Override
+            public void onSendFail(Connector connector) {
+
+            }
+
+            @Override
             public void applyCursorMove(CursorMovement cursorMovement) {
 //                if (userId == cursorMovement.getUserId()) {
 //                    return;
@@ -281,8 +308,30 @@ public class Client {
 
     }
 
+    private String askForIP() {
+        String ip = JOptionPane.showInputDialog("Please enter the server IP", "127.0.0.1");
+
+        if (IPValidation.isIp(ip)) {
+            return ip;
+        }
+
+        return null;
+    }
+
     private void login() {
         username = JOptionPane.showInputDialog("Please enter a username");
+
+        if (username == null) {
+            System.out.println("No username entered, disconnecting");
+            try {
+                connector.disconnect();
+                System.out.println("Connection closed");
+            }
+            catch (IOException ex) {
+                System.out.println("Failed to disconnect from server");
+            }
+            return;
+        }
 
         Login login = new Login(INITIAL_USER_ID, username);
         connector.sendObject(login);

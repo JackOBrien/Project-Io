@@ -15,6 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 public class UserListWindow extends JPanel {
 
@@ -23,7 +24,11 @@ public class UserListWindow extends JPanel {
 
     private JTextArea chatArea;
 
+    private JPanel userListPanel;
+
     private ActionListener followUserListener;
+
+    private ArrayList<JButton> buttonList;
 
     public UserListWindow(ActionListener followUserListener) {
 
@@ -34,15 +39,10 @@ public class UserListWindow extends JPanel {
         c.fill = GridBagConstraints.HORIZONTAL;
 
         //Create user list
-//        users = new DefaultListModel<>();
-//        JBList userList = new JBList(users);
-
-        JPanel userListPanel = new JPanel();
+        userListPanel = new JPanel();
         userListPanel.setLayout(new BoxLayout(userListPanel, BoxLayout.Y_AXIS));
-        JButton testButton = new JButton("TEST (01)");
-        testButton.setActionCommand("0");
-        testButton.addActionListener(followUserListener);
-        userListPanel.add(testButton);
+
+        buttonList = new ArrayList<>();
 
         c.gridx = 0;
         c.gridy = 0;
@@ -104,8 +104,13 @@ public class UserListWindow extends JPanel {
 
     public void addUser(UserInfo user) {
 
+        JButton button = new JButton(user.getUsername());
+        button.setActionCommand(Integer.toString(user.getUserId()));
+        button.addActionListener(followUserListener);
+        buttonList.add(button);
+
         ApplicationManager.getApplication().invokeLater(() -> {
-            this.users.addElement(user);
+            userListPanel.add(button);
         });
     }
 
@@ -132,13 +137,14 @@ public class UserListWindow extends JPanel {
     }
 
     public void removeUserById(int userId) {
-        for (int i = 0; i < users.size(); i++) {
-            final UserInfo userInfo = users.getElementAt(i);
-            if (userInfo.getUserId() == userId) {
+        for (JButton button : buttonList) {
+            if (Integer.parseInt(button.getActionCommand()) == userId) {
+                buttonList.remove(button);
                 ApplicationManager.getApplication().invokeLater(() -> {
-                    users.removeElement(userInfo);
+                    userListPanel.remove(button);
+                    userListPanel.repaint();
                 });
-                return;
+                break;
             }
         }
     }

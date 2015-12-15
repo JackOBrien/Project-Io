@@ -184,6 +184,11 @@ public class Client {
             }
 
             @Override
+            public void onSendFail(Connector connector) {
+                System.out.println("Client failed to write");
+            }
+
+            @Override
             public void applyCursorMove(CursorMovement cursorMovement) {
 
             }
@@ -258,6 +263,11 @@ public class Client {
             }
 
             @Override
+            public void onSendFail(Connector connector) {
+
+            }
+
+            @Override
             public void applyCursorMove(CursorMovement cursorMovement) {
 //                if (userId == cursorMovement.getUserId()) {
 //                    return;
@@ -281,6 +291,18 @@ public class Client {
 
     private void login() {
         username = JOptionPane.showInputDialog("Please enter a username");
+
+        if (username == null) {
+            System.out.println("No username entered, disconnecting");
+            try {
+                connector.disconnect();
+                System.out.println("Connection closed");
+            }
+            catch (IOException ex) {
+                System.out.println("Failed to disconnect from server");
+            }
+            return;
+        }
 
         Login login = new Login(INITIAL_USER_ID, username);
         connector.sendObject(login);

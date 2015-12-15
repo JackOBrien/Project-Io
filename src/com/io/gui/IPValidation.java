@@ -14,6 +14,11 @@ public class IPValidation {
     }
 
     public static boolean isIp(String string) {
+
+        if (string == null) {
+            return false;
+        }
+
         String[] parts = string.split("\\.", -1);
         return parts.length == 4 // 4 parts
                 && Arrays.stream(parts)

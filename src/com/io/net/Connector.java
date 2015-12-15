@@ -6,6 +6,7 @@ import com.io.domain.Packet;
 import com.io.domain.UserEdit;
 import com.io.domain.*;
 
+import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -138,11 +139,8 @@ public class Connector implements Runnable {
             objectOutputStream.writeObject(object);
 
         } catch (IOException ex) {
-            if (socket.isClosed()) {
-                return;
-            }
-            else {
-                ex.printStackTrace();
+            for (ConnectorEvent connectorEvent : listeners) {
+                connectorEvent.onSendFail(this);
             }
         }
     }

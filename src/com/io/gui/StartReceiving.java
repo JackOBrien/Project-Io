@@ -163,17 +163,18 @@ public class StartReceiving {
                 Range range = new Range(value.Position, doc.getTextLength());
                 TextAttributes attributes = buildAttributes(key);
 
+                //If we are following this edit, make sure the editor is active
+                if (followingUserId >= 0 && followingUserId == key) {
+                    FileEditorManager.getInstance(project).openFile(file, true);
+                }
+
                 Editor[] docEditors = EditorFactory.getInstance().getEditors(doc);
 
-                if (docEditors.length == 0 && followingUserId >= 0 && followingUserId == key) {
-                    System.out.println("Need to open editor to follow");
-                }
-                else {
+                if (docEditors.length > 0) {
                     Editor firstEditor = docEditors[0];
                     firstEditor.getMarkupModel().addRangeHighlighter(range.Start, range.End, HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
 
                     if (followingUserId >= 0 && followingUserId == key) {
-                        FileEditorManager.getInstance(project).openFile(file, true);
                         ScrollingModel scrollingModel = firstEditor.getScrollingModel();
                         scrollingModel.disableAnimation();
 

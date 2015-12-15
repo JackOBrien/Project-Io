@@ -40,12 +40,14 @@ public class Client {
             String ip = askForIP();
 
             if (ip == null) {
+                JOptionPane.showMessageDialog(null, "Invalid IP!", "Failed to Connect", JOptionPane.ERROR_MESSAGE);
                 System.out.println("Destination invalid, quitting");
                 return;
             }
 
             connector = new Connector(ip);
         } catch(IOException ex) {
+            JOptionPane.showMessageDialog(null, "Could not connect to server. Wrong IP?", "Failed to Connect", JOptionPane.ERROR_MESSAGE);
             System.out.println("Failed to connect to server");
             return;
         }

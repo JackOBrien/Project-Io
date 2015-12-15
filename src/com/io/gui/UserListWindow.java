@@ -15,6 +15,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 public class UserListWindow extends JPanel {
 
@@ -23,21 +24,32 @@ public class UserListWindow extends JPanel {
 
     private JTextArea chatArea;
 
-    public UserListWindow() {
+    private JPanel userListPanel;
+
+    private ActionListener followUserListener;
+
+    private ArrayList<JButton> buttonList;
+
+    public UserListWindow(ActionListener followUserListener) {
+
+        this.followUserListener = followUserListener;
 
         this.setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
 
         //Create user list
-        users = new DefaultListModel<>();
-        JBList userList = new JBList(users);
+        userListPanel = new JPanel();
+        userListPanel.setLayout(new BoxLayout(userListPanel, BoxLayout.Y_AXIS));
+        userListPanel.add(new JLabel("Select a user to Follow"));
+
+        buttonList = new ArrayList<>();
 
         c.gridx = 0;
         c.gridy = 0;
         c.gridheight = 2;
         c.ipadx = 50;
-        this.add(userList, c);
+        this.add(userListPanel, c);
 
         //Create chat controls
         chatArea = new JTextArea(10, 50);
@@ -79,8 +91,8 @@ public class UserListWindow extends JPanel {
 
     }
 
-    public UserListWindow(Project project) {
-        this();
+    public UserListWindow(Project project, ActionListener followUserListener) {
+        this(followUserListener);
         attachToProject(project);
     }
 
@@ -92,8 +104,39 @@ public class UserListWindow extends JPanel {
     }
 
     public void addUser(UserInfo user) {
+
+        JButton button = new JButton(user.getUsername());
+        button.setActionCommand(Integer.toString(user.getUserId()));
+        button.addActionListener(followUserListener);
+        button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JButton source = (JButton) e.getSource();
+                JButton stopFollowing = new JButton("Stop Following " + source.getText());
+                stopFollowing.setActionCommand("-1");
+                stopFollowing.addActionListener(followUserListener);
+                stopFollowing.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        JButton source = (JButton) e.getSource();
+                        ApplicationManager.getApplication().invokeLater(() -> {
+                            userListPanel.remove(source);
+                            userListPanel.repaint();
+                        });
+                    }
+                });
+
+                ApplicationManager.getApplication().invokeLater(() -> {
+                    userListPanel.add(stopFollowing);
+                });
+            }
+        });
+
+
+        buttonList.add(button);
+
         ApplicationManager.getApplication().invokeLater(() -> {
-            this.users.addElement(user);
+            userListPanel.add(button);
         });
     }
 
@@ -120,15 +163,15 @@ public class UserListWindow extends JPanel {
     }
 
     public void removeUserById(int userId) {
-        for (int i = 0; i < users.size(); i++) {
-            final UserInfo userInfo = users.getElementAt(i);
-            if (userInfo.getUserId() == userId) {
+        for (JButton button : buttonList) {
+            if (Integer.parseInt(button.getActionCommand()) == userId) {
+                buttonList.remove(button);
                 ApplicationManager.getApplication().invokeLater(() -> {
-                    users.removeElement(userInfo);
+                    userListPanel.remove(button);
+                    userListPanel.repaint();
                 });
-                return;
+                break;
             }
         }
     }
-
 }

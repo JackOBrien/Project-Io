@@ -1,10 +1,7 @@
 package com.io.gui;
 
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -17,13 +14,19 @@ import com.io.domain.UserEdit;
 
 import java.awt.*;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class StartReceiving {
 
     StartListening listener;
 
+    private Map<Integer, Integer> cursorPositions;
+
     public StartReceiving(Project project, StartListening listener) {
         this.listener = listener;
+        cursorPositions = new HashMap<>();
     }
 
     public void applyUserEditToDocument(Project project, UserEdit userEdit) {
@@ -114,7 +117,7 @@ public class StartReceiving {
         });
     }
 
-    public void applyHighlightToDocument(Project project, CursorMovement cursorMovement) {
+    public void applyHighlightToDocument(Project project, CursorMovement cursorMovement, int followingUserId) {
 
         if (project.isDisposed()) {
             return;
@@ -137,39 +140,59 @@ public class StartReceiving {
                 return;
             }
 
-            Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
-
-            final TextAttributes attributes = new TextAttributes();
-            final JBColor color = JBColor.BLUE;
-
-            attributes.setEffectColor(color);
-            attributes.setEffectType(EffectType.SEARCH_MATCH);
-            attributes.setBackgroundColor(color);
-            attributes.setForegroundColor(JBColor.WHITE);
-
-            int start = cursorMovement.getPosition();
-
-            int end = start + 1;
             int textLength = document.getTextLength();
 
             if (textLength == 0) {
                 return;
             }
 
-            if (end > textLength) {
-                end = textLength;
-            }
-            if (start >= textLength) {
-                start = textLength - 1;
-            }
+            Editor[] editors = EditorFactory.getInstance().getEditors(document, project);
 
-            for (Editor e : editors) {
-                for (RangeHighlighter highlighter : e.getMarkupModel().getAllHighlighters()) {
+            // Records this cursor's location
+            cursorPositions.put(cursorMovement.getUserId(), cursorMovement.getPosition());
+
+            for (Editor editor : editors) {
+                for (RangeHighlighter highlighter : editor.getMarkupModel().getAllHighlighters()) {
                     highlighter.dispose();
                 }
 
-                e.getMarkupModel().addRangeHighlighter(start, end,
-                        HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
+                CaretModel caretModel = editor.getCaretModel();
+
+                for (Map.Entry<Integer, Integer> pair : cursorPositions.entrySet()) {
+
+
+                    int start = pair.getValue();
+
+                    int end = start + 1;
+
+                    if (end > textLength) {
+                        end = textLength;
+                    }
+                    if (start >= textLength) {
+                        start = textLength - 1;
+                    }
+
+                    JBColor color = Colors.getColorById(pair.getKey());
+
+                    TextAttributes attributes = new TextAttributes();
+
+                    attributes.setEffectType(EffectType.SEARCH_MATCH);
+                    attributes.setForegroundColor(JBColor.WHITE);
+
+                    attributes.setEffectColor(color);
+                    attributes.setBackgroundColor(color);
+
+                    editor.getMarkupModel().addRangeHighlighter(start, end,
+                            HighlighterLayer.ERROR + 100, attributes, HighlighterTargetArea.EXACT_RANGE);
+
+                    if (followingUserId >= 0 && followingUserId == pair.getKey()) {
+                        caretModel.moveToOffset(start);
+                        LogicalPosition newPosition = caretModel.getLogicalPosition();
+                        ScrollingModel scrollingModel = editor.getScrollingModel();
+                        scrollingModel.disableAnimation();
+                        scrollingModel.scrollTo(newPosition, ScrollType.MAKE_VISIBLE);
+                    }
+                }
             }
         });
     }

@@ -1,6 +1,6 @@
 <idea-plugin version="2">
     <id>com.yourcompany.unique.plugin.id</id>
-    <name>Plugin display name here</name>
+    <name>Project IO</name>
     <version>1.0</version>
     <vendor email="support@yourcompany.com" url="http://www.yourcompany.com">YourCompany</vendor>
 
@@ -46,8 +46,9 @@
             <add-to-group group-id="ToolsMenu" anchor="first"/>
         </action>
 
-        <action id="io.startProjectClient" class="com.io.gui.StartIoClient" text="Start Project Io As Client">
+        <action id="io.startProjectClient" class="com.io.gui.StartIoClient" text="Start Project Io As Client" icon="/icons/io.png">
             <add-to-group group-id="ToolsMenu" anchor="first" />
+            <add-to-group group-id="WelcomeScreen.QuickStart" anchor="last"/>
         </action>
     </actions>
 

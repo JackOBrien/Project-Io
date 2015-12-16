@@ -6,6 +6,7 @@ import com.io.domain.Packet;
 import com.io.domain.UserEdit;
 import com.io.domain.*;
 
+import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -19,8 +20,8 @@ public class Connector implements Runnable {
     private List<ConnectorEvent> listeners;
 
     /** Client Constructor */
-    public Connector() throws IOException {
-        socket = new Socket("127.0.0.1", Server.PORT);
+    public Connector(String ip) throws IOException {
+        socket = new Socket(ip, Server.PORT);
         listeners = new ArrayList<>();
     }
 
@@ -108,10 +109,10 @@ public class Connector implements Runnable {
                 /* Looks for packets signifying a cursor was moved */
                 else if (packet.getPacketType() == CURSOR_MOVE) {
 
-                    UserEdit userEdit = (UserEdit) packet;
+                    CursorMovement cursorMovement = (CursorMovement) packet;
 
                     for (ConnectorEvent connectorEvent : listeners) {
-                        connectorEvent.applyCursorMove(userEdit);
+                        connectorEvent.applyCursorMove(cursorMovement);
                     }
                 }
             }
@@ -138,17 +139,18 @@ public class Connector implements Runnable {
             objectOutputStream.writeObject(object);
 
         } catch (IOException ex) {
-            if (socket.isClosed()) {
-                return;
-            }
-            else {
-                ex.printStackTrace();
+            for (ConnectorEvent connectorEvent : listeners) {
+                connectorEvent.onSendFail(this);
             }
         }
     }
 
     public void sendUserEdit(UserEdit userEdit) {
         sendObject(userEdit);
+    }
+
+    public void sendCursorMovement(CursorMovement cursorMovement) {
+        sendObject(cursorMovement);
     }
 
     public void sendFileTransferRequest(FileTransfer fileTransfer) {

@@ -3,16 +3,18 @@ package com.io.gui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.wm.WindowManager;
 import com.io.domain.*;
 import com.io.net.Connector;
 import com.io.net.ConnectorEvent;
 import com.io.net.Server;
 import com.io.net.UnZip;
-import org.jdom.JDOMException;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -32,13 +34,35 @@ public class Client {
     private UserListWindow userListWindow;
     private Project project;
 
-    public Client (final Project currentProject) {
+    private int followingUserId;
+    private Thread executionThread = null;
 
-        userListWindow = new UserListWindow();
+    public Client () {
+
+        followingUserId = -1; //Not following a user initially
+
+        ActionListener followListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Button Pressed: " + e.getActionCommand());
+                followingUserId = Integer.parseInt(e.getActionCommand());
+            }
+        };
+
+        userListWindow = new UserListWindow(followListener);
 
         try {
-            connector = new Connector();
+            String ip = askForIP();
+
+            if (ip == null) {
+                JOptionPane.showMessageDialog(null, "Invalid IP!", "Failed to Connect", JOptionPane.ERROR_MESSAGE);
+                System.out.println("Destination invalid, quitting");
+                return;
+            }
+
+            connector = new Connector(ip);
         } catch(IOException ex) {
+            JOptionPane.showMessageDialog(null, "Could not connect to server. Wrong IP?", "Failed to Connect", JOptionPane.ERROR_MESSAGE);
             System.out.println("Failed to connect to server");
             return;
         }
@@ -65,7 +89,7 @@ public class Client {
             public void applyUserId(Login login, Connector connector) {
                 userId = login.getUserId();
                 username = login.getUsername();
-                userListWindow.addUser(new UserInfo(userId, username));
+                userListWindow.addUser(new UserInfo(userId, username), true);
                 System.out.println("User id is now " + userId);
                 requestFiles();
             }
@@ -94,12 +118,20 @@ public class Client {
             public void applyNewFiles(FileTransfer fileTransfer){
                 try {
 
-                    //Get parent directory
-                    String dir = Paths.get(currentProject.getBasePath()).getParent().toString();
+                    String dir = "";
 
-                    //For testing on one computer
-                    String parent = Paths.get(dir).getParent().toString();
-                    dir = Paths.get(parent, "IdeaProjectIO", fileTransfer.getProjectName()).toString();
+                    JFileChooser fileChooser = new JFileChooser();
+                    fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                    fileChooser.setDialogTitle("Select a location to save the project folder in");
+                    int ret = fileChooser.showDialog(WindowManager.getInstance().findVisibleFrame().getGlassPane(), "Choose Folder");
+                    if (ret == JFileChooser.APPROVE_OPTION) {
+                        String chosenDirectory = fileChooser.getSelectedFile().getAbsolutePath();
+                        dir = Paths.get(chosenDirectory, fileTransfer.getProjectName()).toString();
+                    }
+                    else {
+                        logout();
+                        return;
+                    }
 
                     System.out.println("Saving project to: " + dir);
 
@@ -108,6 +140,7 @@ public class Client {
                     }
                     catch (IOException ex) {
                         System.out.println("Failed to unzip project.");
+                        logout();
                         return;
                     }
 
@@ -123,12 +156,6 @@ public class Client {
                         catch (IOException ex) {
                             System.out.println("Failed to open project");
                         }
-                        catch (JDOMException ex) {
-                            ex.printStackTrace();
-                        }
-                        catch (InvalidDataException ex) {
-                            System.out.println("Invalid project!");
-                        }
 
                         if (newProject != null) {
                             System.out.println("Opening project.");
@@ -137,8 +164,7 @@ public class Client {
                         }
                     });
 
-                    //TODO Still needs to update the current project to the new project from the new dir
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.getMessage();
                     e.printStackTrace();
                 }
@@ -173,12 +199,30 @@ public class Client {
             }
 
             @Override
-            public void applyCursorMove(UserEdit userEdit) {
+            public void onSendFail(Connector connector) {
+                System.out.println("Client failed to write");
+
+                try {
+                    connector.disconnect();
+                    System.out.println("Disconnected from server");
+                }
+                catch (IOException ex) {
+                    System.out.println("Failed to disconnect from server");
+                }
+
+                ApplicationManager.getApplication().getInvokator().invokeLater(() -> {
+                    ProjectManager.getInstance().closeProject(project);
+                });
+            }
+
+            @Override
+            public void applyCursorMove(CursorMovement cursorMovement) {
 
             }
         });
 
-        (new Thread(connector)).start();
+        this.executionThread = new Thread(connector);
+        this.executionThread.start();
 
         login();
     }
@@ -197,18 +241,17 @@ public class Client {
                 userEdit.setUserId(userId);
                 connector.sendUserEdit(userEdit);
             }
+
+            @Override
+            public void sendCursorMovement(CursorMovement cursorMovement) {
+                cursorMovement.setUserId(userId);
+                connector.sendCursorMovement(cursorMovement);
+            }
         });
 
         IOProject.getInstance(project).addProjectClosedListener(() -> {
-            try {
-                Logout logout = new Logout(userId);
-                connector.sendLogout(logout);
-                connector.disconnect();
-                System.out.println("Closed connection to server");
-            }
-            catch (IOException ex) {
-                System.out.println("Failed to disconnect from server");
-            }
+            logout();
+            this.executionThread.interrupt();
         });
 
         connector.addEventListener(new ConnectorEvent() {
@@ -249,22 +292,61 @@ public class Client {
             }
 
             @Override
-            public void applyCursorMove(UserEdit userEdit) {
-                if (userId == userEdit.getUserId()) {
-                    return;
-                }
+            public void onSendFail(Connector connector) {
 
-                receiving.applyHighlightToDocument(project, userEdit);
+            }
+
+            @Override
+            public void applyCursorMove(CursorMovement cursorMovement) {
+//                if (userId == cursorMovement.getUserId()) {
+//                    return;
+//                }
+
+                receiving.applyHighlightToDocument(project, cursorMovement, followingUserId);
             }
         });
 
     }
 
+    private String askForIP() {
+        String ip = JOptionPane.showInputDialog("Please enter the server IP", "127.0.0.1");
+
+        if (IPValidation.isIp(ip)) {
+            return ip;
+        }
+
+        return null;
+    }
+
     private void login() {
         username = JOptionPane.showInputDialog("Please enter a username");
 
+        if (username == null) {
+            System.out.println("No username entered, disconnecting");
+            try {
+                connector.disconnect();
+                System.out.println("Connection closed");
+            }
+            catch (IOException ex) {
+                System.out.println("Failed to disconnect from server");
+            }
+            return;
+        }
+
         Login login = new Login(INITIAL_USER_ID, username);
         connector.sendObject(login);
+    }
+
+    private void logout() {
+        try {
+            Logout logout = new Logout(userId);
+            connector.sendLogout(logout);
+            connector.disconnect();
+            System.out.println("Closed connection to server");
+        }
+        catch (IOException ex) {
+            System.out.println("Failed to disconnect from server");
+        }
     }
 
     private void requestFiles(){

@@ -18,7 +18,7 @@ import java.util.ArrayList;
 
 public class UserListWindow extends JPanel {
 
-    private DefaultListModel<UserInfo> users;
+    private ArrayList<UserInfo> users;
     private ActionListener followUserListener;
     private ChatEvent chatEvent = null;
 
@@ -43,6 +43,7 @@ public class UserListWindow extends JPanel {
         userListPanel.add(new JLabel("Select a user to Follow"));
 
         buttonList = new ArrayList<>();
+        users = new ArrayList<>();
 
         c.gridx = 0;
         c.gridy = 0;
@@ -108,6 +109,7 @@ public class UserListWindow extends JPanel {
 
     public void addUser(UserInfo user, Boolean isSelf) {
 
+
         JButton button = new JButton(user.getUsername());
         button.setActionCommand(Integer.toString(user.getUserId()));
         button.addActionListener(followUserListener);
@@ -153,6 +155,7 @@ public class UserListWindow extends JPanel {
         }
 
         buttonList.add(button);
+        users.add(user);
 
         SwingUtilities.invokeLater(() -> {
             userListPanel.add(button);
@@ -175,8 +178,13 @@ public class UserListWindow extends JPanel {
     }
 
     public String getUsernameById(int userId) {
+
+        if (users == null) {
+            return "<Not Found>";
+        }
+
         for (int i = 0; i < users.size(); i++) {
-            UserInfo userInfo = users.getElementAt(i);
+            UserInfo userInfo = users.get(i);
             if (userInfo.getUserId() == userId) {
                 return userInfo.getUsername();
             }
@@ -187,6 +195,7 @@ public class UserListWindow extends JPanel {
     public void removeUserById(int userId) {
         for (JButton button : buttonList) {
             if (Integer.parseInt(button.getActionCommand()) == userId) {
+                users.removeIf(user -> user.getUserId() == userId);
                 buttonList.remove(button);
                 ApplicationManager.getApplication().invokeLater(() -> {
                     userListPanel.remove(button);

@@ -64,22 +64,33 @@ public class StartReceiving {
                 Editor[] editors = EditorFactory.getInstance().getEditors(document);
                 Editor editor = null;
                 int cursorPosition = 0;
+                int verticalScrollOffset = -1;
+                ScrollingModel scrollingModel = null;
 
                 if (editors.length > 0) {
                     editor = editors[0];
                     cursorPosition = editor.getCaretModel().getOffset();
+                    scrollingModel = editor.getScrollingModel();
+                    if (scrollingModel != null) {
+                        verticalScrollOffset = scrollingModel.getVerticalScrollOffset();
+                    }
                 }
 
                 try {
                     String currentText = document.getText();
                     IOPatcher patcher = new IOPatcher();
-
                     Object[] output = patcher.patch_apply(userEdit.getPatches(), currentText);
                     String newText = (String)output[0];
                     document.setText(newText);
 
                     //If editor is open, try to keep cursor still
+                    //and scroll position the same
                     if (editor != null) {
+
+                        if (verticalScrollOffset >= 0 && scrollingModel != null) {
+                            scrollingModel.scrollVertically(verticalScrollOffset);
+                            System.out.println("Going back to original scroll offset");
+                        }
 
                         //Get the list of positions where the patch was applied
                         int[] patchPositions = (int[]) output[2];

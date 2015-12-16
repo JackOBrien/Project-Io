@@ -1,11 +1,13 @@
 package com.io.net;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.io.domain.*;
 import com.io.gui.*;
 
 import javax.swing.*;
-import java.io.File;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -40,10 +42,24 @@ public class Server implements Runnable {
 
     private UserListWindow userListWindow;
 
+    private int followingUserId;
+
+    private Thread executionThread = null;
+
     public Server(final Project project) {
 
         listening = new StartListening(project);
         receiving = new StartReceiving(project, listening);
+
+        followingUserId = -1; //Not following a user initially
+
+        ActionListener followListener = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                followingUserId = Integer.parseInt(e.getActionCommand());
+            }
+        };
+
 
         userId = INITIAL_USER_ID;
         username = JOptionPane.showInputDialog("Please enter a username");
@@ -51,8 +67,8 @@ public class Server implements Runnable {
             username = INITIAL_USER_NAME;
         }
 
-        userListWindow = new UserListWindow(project);
-        userListWindow.addUser(new UserInfo(userId, username));
+        userListWindow = new UserListWindow(project, followListener);
+        userListWindow.addUser(new UserInfo(userId, username), true);
 
 
         //Broadcast chat messages from server user
@@ -82,6 +98,8 @@ public class Server implements Runnable {
             catch (IOException ex) {
                 System.out.println("Failed to disconnect from clients");
             }
+
+            this.executionThread.interrupt();
         });
 
         this.addListener(new ConnectorEvent() {
@@ -119,22 +137,7 @@ public class Server implements Runnable {
 
             @Override
             public void applyLogout(Logout logout, Connector connector) {
-
-                ServerConnection serverConnection = findServerConnection(connector);
-                int userId = serverConnection.getUserId();
-                String username = serverConnection.getUsername();
-
-                //Remove all connection objects belonging to the user
-                connections.remove(serverConnection);
-                connectionLookup.remove(connector);
-                userListWindow.removeUserById(userId);
-
-                System.out.println("[" + username + "](" + userId + ") disconnected");
-
-                //Broadcast logout to other clients
-                for (ServerConnection connection : connections) {
-                    connection.getConnector().sendLogout(logout);
-                }
+                logout(connector);
             }
 
 
@@ -144,32 +147,35 @@ public class Server implements Runnable {
             }
 
             @Override
-            public void applyCursorMove(UserEdit userEdit) {
-                if (userId == userEdit.getUserId()) {
-                    return;
-                }
-
-                receiving.applyHighlightToDocument(project, userEdit);
+            public void applyCursorMove(CursorMovement cursorMovement) {
+                receiving.applyHighlightToDocument(project, cursorMovement, followingUserId);
+                broadcastCursorMovement(cursorMovement);
             }
 
             @Override
             public void applyNewFiles(FileTransfer fileTransferRequest){
                 try {
                     String dir = project.getBasePath();
-                    byte[] content;
 
-                    try {
-                        content = Zip.zip(dir);
-                    }
-                    catch (IOException ex) {
-                        System.out.println("Failed to zip project files.");
-                        return;
-                    }
+                    ApplicationManager.getApplication().getInvokator().invokeLater(() -> {
+                        byte[] content;
 
-                    FileTransfer fileTransfer = new FileTransfer(userId, project.getName(), content);
+                        ApplicationManager.getApplication().saveAll();
+                        System.out.println("Flushed changes to disk");
 
-                    sendFileTransfer(fileTransferRequest.getUserId(), fileTransfer);
-                }catch (Exception e){
+                        try {
+                            content = Zip.zip(dir);
+                        }
+                        catch (IOException ex) {
+                            System.out.println("Failed to zip project files.");
+                            return;
+                        }
+
+                        FileTransfer fileTransfer = new FileTransfer(userId, project.getName(), content);
+
+                        sendFileTransfer(fileTransferRequest.getUserId(), fileTransfer);
+                    });
+                } catch (Exception e){
                     e.getMessage();
                     e.printStackTrace();
                 }
@@ -202,6 +208,15 @@ public class Server implements Runnable {
 
                 System.out.println("[" + username + "](" + userId + ") has disconnected from server");
             }
+
+            @Override
+            public void onSendFail(Connector connector) {
+                System.out.println("Write Fail. Disconnecting from client");
+
+                ApplicationManager.getApplication().getInvokator().invokeLater(() -> {
+                    logout(connector);
+                });
+            }
         });
 
         listening.addEventListener(new EditorEvent() {
@@ -210,9 +225,17 @@ public class Server implements Runnable {
                 userEdit.setUserId(userId);
                 broadcastEdit(userEdit);
             }
+
+            @Override
+            public void sendCursorMovement(CursorMovement cursorMovement) {
+                cursorMovement.setUserId(userId);
+                broadcastCursorMovement(cursorMovement);
+            }
         });
 
-        (new Thread(this)).start();
+        this.executionThread = new Thread(this);
+        this.executionThread.start();
+
         System.out.println("Server started");
 
     }
@@ -270,6 +293,14 @@ public class Server implements Runnable {
         }
     }
 
+    public void broadcastCursorMovement(CursorMovement cursorMovement) {
+        for (ServerConnection connection: connections) {
+            if (connection.getUserId() != cursorMovement.getUserId()) {
+                connection.getConnector().sendCursorMovement(cursorMovement);
+            }
+        }
+    }
+
     public void sendCurrentUserList(int userId, Connector connector) {
 
         ArrayList<UserInfo> newUsers = new ArrayList<>();
@@ -296,6 +327,32 @@ public class Server implements Runnable {
             if (connection.getUserId() != userId) {
                 connection.getConnector().sendConnectionUpdate(connectionUpdate);
             }
+        }
+    }
+
+    private void logout(Connector connector) {
+        ServerConnection serverConnection = findServerConnection(connector);
+
+        if (serverConnection == null) {
+            System.out.println("Could not find server connection");
+            return;
+        }
+
+        int userId = serverConnection.getUserId();
+        String username = serverConnection.getUsername();
+
+        //Remove all connection objects belonging to the user
+        connections.remove(serverConnection);
+        connectionLookup.remove(connector);
+        userListWindow.removeUserById(userId);
+
+        System.out.println("[" + username + "](" + userId + ") disconnected");
+
+        Logout logout = new Logout(userId);
+
+        //Broadcast logout to other clients
+        for (ServerConnection connection : connections) {
+            connection.getConnector().sendLogout(logout);
         }
     }
 
